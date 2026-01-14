@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverActions: {
+    bodySizeLimit: "4mb", // Allow up to 4MB for file uploads (profile pictures are max 3MB)
+  },
 };
 
 export default nextConfig;

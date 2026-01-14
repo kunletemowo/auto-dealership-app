@@ -9,12 +9,13 @@ interface FileInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
-  ({ className, label, error, accept, multiple, ...props }, ref) => {
+  ({ className, label, error, accept, multiple, required, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
             {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         <input

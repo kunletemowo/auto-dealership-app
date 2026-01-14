@@ -21,10 +21,10 @@ export async function uploadProfileAvatar(file: File) {
     return { error: "Please upload only JPEG, PNG, or WebP images", url: null };
   }
 
-  // Validate file size (max 2MB for profile pictures)
-  const maxSize = 2 * 1024 * 1024; // 2MB
+  // Validate file size (max 3MB for profile pictures)
+  const maxSize = 3 * 1024 * 1024; // 3MB
   if (file.size > maxSize) {
-    return { error: "Image must be less than 2MB", url: null };
+    return { error: "Image must be less than 3MB", url: null };
   }
 
   // Generate unique filename
@@ -40,7 +40,14 @@ export async function uploadProfileAvatar(file: File) {
     });
 
   if (uploadError) {
-    return { error: uploadError.message, url: null };
+    // Provide more specific error messages
+    if (uploadError.message.includes("Bucket not found") || uploadError.message.includes("does not exist")) {
+      return { error: "Storage bucket not configured. Please set up the 'profile-avatars' bucket in Supabase Storage.", url: null };
+    }
+    if (uploadError.message.includes("new row violates row-level security")) {
+      return { error: "Permission denied. Please check your storage policies.", url: null };
+    }
+    return { error: uploadError.message || "Failed to upload image to storage", url: null };
   }
 
   // Get public URL

@@ -34,7 +34,10 @@ export default async function ProfilePage() {
               initialData={{
                 display_name: profile?.display_name || null,
                 phone: profile?.phone || null,
-                location: profile?.location || null,
+                address: profile?.address || null,
+                city: profile?.city || null,
+                province: profile?.province || null,
+                postal_code: profile?.postal_code || null,
                 account_type: profile?.account_type || "individual",
                 avatar_url: profile?.avatar_url || null,
                 email: profile?.email || null,
