@@ -3,10 +3,10 @@ export default function ProtectionPlansPage() {
     <div className="container mx-auto px-4 py-12">
       <div className="mx-auto max-w-4xl">
         <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
-          Protection Plans
+          Third Party Protection Plans
         </h1>
         <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-          Protect your investment with our comprehensive vehicle protection plans.
+        Our platform simplifies the car ownership experience by connecting buyers with trusted third-party protection providers. Whether you’re purchasing a new or used vehicle, we make it easy to compare and choose comprehensive coverage options—ranging from extended warranties to maintenance and repair plans—all in one convenient place. We help drivers protect their investment with transparency, flexibility, and peace of mind.
         </p>
 
         <div className="mt-8 space-y-6">

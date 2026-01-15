@@ -25,7 +25,7 @@ export function Header() {
 
   const moreMenuItems = [
     { href: "/about", label: "About" },
-    { href: "/car-value-calculator", label: "Car Value Calculator" },
+    { href: "/car-value-calculator", label: "Estimated Car Value Calculator" },
     { href: "/protection-plans", label: "Protection plans" },
     { href: "/faq", label: "FAQ" },
     { href: "/careers", label: "Careers" },
