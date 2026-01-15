@@ -13,40 +13,64 @@ export function UserMenu() {
   const pathname = usePathname();
 
   const checkUser = async () => {
-    const supabase = createClient();
-    // Try both getSession and getUser for reliability
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      setUser(session.user);
+    try {
+      const supabase = createClient();
+      
+      // Check if environment variables are set
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        setLoading(false);
+        return;
+      }
+
+      // Try both getSession and getUser for reliability
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        setLoading(false);
+        return;
+      }
+      // Fallback to getUser if getSession doesn't work
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
       setLoading(false);
-      return;
+    } catch (error) {
+      // If Supabase initialization fails, just show logged out state
+      console.error("Error checking user:", error);
+      setLoading(false);
     }
-    // Fallback to getUser if getSession doesn't work
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    setLoading(false);
   };
 
   useEffect(() => {
-    const supabase = createClient();
-
-    // Get initial user
-    checkUser();
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
+    // Check if environment variables are set before initializing Supabase
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
       setLoading(false);
-      
-      // Refresh page on sign in/out to sync server state
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        router.refresh();
-      }
-    });
+      return;
+    }
 
-    return () => subscription.unsubscribe();
+    try {
+      const supabase = createClient();
+
+      // Get initial user
+      checkUser();
+
+      // Listen for auth changes
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        // Refresh page on sign in/out to sync server state
+        if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+          router.refresh();
+        }
+      });
+
+      return () => subscription.unsubscribe();
+    } catch (error) {
+      console.error("Error initializing auth:", error);
+      setLoading(false);
+    }
   }, [router]);
 
   // Re-check user when pathname changes (e.g., after login redirect)
@@ -60,13 +84,21 @@ export function UserMenu() {
   }, [pathname]);
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
-    
-    if (!error) {
-      setUser(null);
-      router.push("/");
-      router.refresh();
+    try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        return;
+      }
+
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+      
+      if (!error) {
+        setUser(null);
+        router.push("/");
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Error signing out:", error);
     }
   };
 
