@@ -94,7 +94,8 @@ export async function getCarListings(filters?: {
   limit?: number;
   offset?: number;
 }) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
   let query = supabase
     .from("car_listings")
@@ -480,7 +481,15 @@ export async function getCarListings(filters?: {
     filteredData = filteredData.slice(0, filters.limit);
   }
 
-  return { data: filteredData, error: null };
+    return { data: filteredData, error: null };
+  } catch (error: any) {
+    // If Supabase client creation or query fails, return error
+    console.error("Error fetching car listings:", error);
+    return {
+      error: error.message || "Failed to fetch car listings. Please check your environment variables.",
+      data: null,
+    };
+  }
 }
 
 export async function getCarListing(id: string) {

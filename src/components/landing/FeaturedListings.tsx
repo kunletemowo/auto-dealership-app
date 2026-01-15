@@ -3,12 +3,44 @@ import { getCarListings } from "@/app/actions/cars";
 import { CarCard } from "@/components/cars/CarCard";
 
 export async function FeaturedListings() {
-  // Fetch the latest 6 active listings
-  const { data: listings, error } = await getCarListings({
-    limit: 6,
-    sortBy: "created_at",
-    sortOrder: "desc",
-  });
+  // Check if environment variables are set
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return (
+      <section className="bg-zinc-50 py-24 dark:bg-zinc-950 sm:py-32">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
+              Featured Listings
+            </h2>
+            <p className="mt-2 text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+              Check out some of our latest listings
+            </p>
+          </div>
+          <div className="mt-16 text-center text-zinc-600 dark:text-zinc-400">
+            No featured listings available at the moment.
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  let listings: any[] = [];
+  let error: string | null = null;
+
+  try {
+    // Fetch the latest 6 active listings
+    const result = await getCarListings({
+      limit: 6,
+      sortBy: "created_at",
+      sortOrder: "desc",
+    });
+    listings = result.data || [];
+    error = result.error || null;
+  } catch (err: any) {
+    // If getCarListings throws an error, catch it and show empty state
+    console.error("Error fetching featured listings:", err);
+    error = err.message || "Failed to load listings";
+  }
 
   const featuredCars = listings || [];
 
