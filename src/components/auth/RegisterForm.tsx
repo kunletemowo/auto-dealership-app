@@ -14,13 +14,24 @@ export function RegisterForm() {
     setError("");
     setLoading(true);
 
-    const result = await signUp(formData);
+    try {
+      const result = await signUp(formData);
 
-    if (result?.error) {
-      setError(result.error);
-      setLoading(false);
-    } else if (result?.success) {
-      setSuccess(true);
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      } else if (result?.success) {
+        setSuccess(true);
+        setLoading(false);
+      } else {
+        // Handle case where result is undefined or unexpected
+        setError("An unexpected error occurred. Please try again.");
+        setLoading(false);
+      }
+    } catch (err: any) {
+      // Catch any unexpected errors from the server action
+      console.error("Registration error:", err);
+      setError(err.message || "An unexpected error occurred. Please try again.");
       setLoading(false);
     }
   };
