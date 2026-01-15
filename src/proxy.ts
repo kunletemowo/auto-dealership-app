@@ -2,14 +2,22 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  // Check if environment variables are set
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // If environment variables are missing, return response without Supabase initialization
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn("Supabase environment variables are missing. Skipping session refresh.");
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -26,11 +34,20 @@ export async function proxy(request: NextRequest) {
           );
         },
       },
-    }
-  );
+    });
 
-  // Refresh session if expired - required for Server Components
-  await supabase.auth.getUser();
+    // Refresh session if expired - required for Server Components
+    // Wrap in try-catch to prevent proxy from crashing on auth errors
+    try {
+      await supabase.auth.getUser();
+    } catch (error) {
+      // Log error but don't fail the request
+      console.error("Error refreshing Supabase session:", error);
+    }
+  } catch (error) {
+    // If Supabase client creation fails, log but continue
+    console.error("Error initializing Supabase client:", error);
+  }
 
   return supabaseResponse;
 }
