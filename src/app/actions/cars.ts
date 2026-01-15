@@ -520,14 +520,7 @@ export async function getCarListing(id: string) {
       updateSucceeded = true;
     } else {
       // Function returned 0, meaning no rows were updated - try fallback
-      const errorMessage = functionError?.message || "";
-      const isFunctionNotFound = errorMessage.includes("function") || 
-                                 errorMessage.includes("does not exist") || 
-                                 errorMessage.includes("schema cache");
-      
-      if (!isFunctionNotFound) {
-        console.warn(`View count function returned 0 for listing ${id} - trying fallback update`);
-      }
+      console.warn(`View count function returned 0 for listing ${id} - trying fallback update`);
     }
   } else if (functionError) {
     // Function doesn't exist or failed - try direct update as fallback

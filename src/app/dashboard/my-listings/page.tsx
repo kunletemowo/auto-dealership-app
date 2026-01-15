@@ -96,7 +96,9 @@ export default async function MyListingsPage() {
                         Edit
                       </Button>
                     </Link>
-                    <form action={deleteCarListing.bind(null, car.id)} className="flex-1">
+                    <form action={async () => {
+                      await deleteCarListing(car.id);
+                    }} className="flex-1">
                       <Button
                         type="submit"
                         variant="outline"

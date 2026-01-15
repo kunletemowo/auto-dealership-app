@@ -10,9 +10,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverActions: {
-    bodySizeLimit: "4mb", // Allow up to 4MB for file uploads (profile pictures are max 3MB)
-  },
+  // Note: serverActions.bodySizeLimit is not available in Next.js 16.1.1
+  // Profile images are uploaded client-side directly to Supabase, so this config is not needed
 };
 
 export default nextConfig;

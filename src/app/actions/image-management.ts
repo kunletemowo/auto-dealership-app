@@ -31,7 +31,8 @@ export async function deleteCarImageById(imageId: string) {
   }
 
   // Verify ownership
-  if (image.car_listings?.user_id !== user.id) {
+  const carListing = Array.isArray(image.car_listings) ? image.car_listings[0] : image.car_listings;
+  if (!carListing || carListing.user_id !== user.id) {
     return { error: "Unauthorized" };
   }
 
