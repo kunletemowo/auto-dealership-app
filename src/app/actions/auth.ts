@@ -7,9 +7,20 @@ import { loginSchema, registerSchema } from "@/lib/validators/auth";
 
 export async function signUp(formData: FormData) {
   // Check for environment variables early
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  
+  if (!supabaseUrl || !supabaseKey) {
+    // Log for debugging (only in server logs, not exposed to client)
+    console.error("Missing Supabase env vars:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+      urlLength: supabaseUrl?.length || 0,
+      keyLength: supabaseKey?.length || 0,
+    });
+    
     return {
-      error: "Authentication service is not configured. Please contact support.",
+      error: "Authentication service is not configured. Please check your Vercel environment variables and redeploy. Visit /debug-env to verify configuration.",
     };
   }
 
@@ -82,9 +93,20 @@ export async function signUp(formData: FormData) {
 
 export async function signIn(formData: FormData) {
   // Check for environment variables early
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  
+  if (!supabaseUrl || !supabaseKey) {
+    // Log for debugging (only in server logs, not exposed to client)
+    console.error("Missing Supabase env vars:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+      urlLength: supabaseUrl?.length || 0,
+      keyLength: supabaseKey?.length || 0,
+    });
+    
     return {
-      error: "Authentication service is not configured. Please contact support.",
+      error: "Authentication service is not configured. Please check your Vercel environment variables and redeploy. Visit /debug-env to verify configuration.",
     };
   }
 
