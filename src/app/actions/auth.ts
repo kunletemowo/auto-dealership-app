@@ -66,18 +66,10 @@ export async function signUp(formData: FormData) {
       return { error: error.message };
     }
 
-    // Create profile entry
-    if (data.user) {
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: data.user.id,
-        display_name: email.split("@")[0], // Default to email username
-      });
-
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-        // Don't fail the signup if profile creation fails
-      }
-    }
+    // Profile is automatically created by database trigger (handle_new_user)
+    // No need to manually insert here - the trigger handles it
+    // If the trigger isn't set up, the user will still be created in auth.users
+    // and can create their profile later when needed
 
     revalidatePath("/", "layout");
     return { success: true, user: data.user };
