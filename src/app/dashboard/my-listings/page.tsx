@@ -1,6 +1,7 @@
 import { getUserListings } from "@/app/actions/cars";
 import { getCurrentUser } from "@/app/actions/auth";
 import { redirect } from "next/navigation";
+import { unstable_noStore } from "next/cache";
 import Link from "next/link";
 import { CarCard } from "@/components/cars/CarCard";
 import { Button } from "@/components/forms/Button";
@@ -8,6 +9,8 @@ import { deleteCarListing } from "@/app/actions/cars";
 import { ListingStatusToggle } from "@/components/cars/ListingStatusToggle";
 
 export default async function MyListingsPage() {
+  unstable_noStore(); // Mark as dynamic since we use cookies/auth
+  
   const user = await getCurrentUser();
 
   if (!user) {

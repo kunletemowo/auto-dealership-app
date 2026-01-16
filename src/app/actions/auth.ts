@@ -186,9 +186,26 @@ export async function signOut() {
 }
 
 export async function getCurrentUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  try {
+    // Check for environment variables early
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return null;
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.error("Error getting current user:", error);
+      return null;
+    }
+
+    return user;
+  } catch (err: any) {
+    console.error("Error in getCurrentUser:", err);
+    return null;
+  }
 }

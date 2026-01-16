@@ -1,8 +1,11 @@
 import { CarListingForm } from "@/components/cars/CarListingForm";
 import { getCurrentUser } from "@/app/actions/auth";
 import { redirect } from "next/navigation";
+import { unstable_noStore } from "next/cache";
 
 export default async function NewCarPage() {
+  unstable_noStore(); // Mark as dynamic since we use cookies/auth
+  
   const user = await getCurrentUser();
 
   if (!user) {

@@ -5,28 +5,61 @@ import { createClient } from "@/lib/supabase/server";
 import { profileUpdateSchema } from "@/lib/validators/profile";
 
 export async function getProfile() {
-  const supabase = await createClient();
+  try {
+    // Check for environment variables early
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return { error: "Database connection not configured", data: null };
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const supabase = await createClient();
 
-  if (!user) {
-    return { error: "Not authenticated", data: null };
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { error: "Not authenticated", data: null };
+    }
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      // If profile doesn't exist, it might be a new user - create it
+      if (error.code === "PGRST116" || error.message?.includes("No rows")) {
+        // Profile doesn't exist, try to create it with default values
+        const { data: newProfile, error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            display_name: user.email?.split("@")[0] || "User",
+            city: "Unknown", // Required field
+          })
+          .select()
+          .single();
+
+        if (insertError || !newProfile) {
+          console.error("Error creating profile:", insertError);
+          return { error: "Failed to create profile", data: null };
+        }
+
+        return { data: { ...newProfile, email: user.email }, error: null };
+      }
+
+      console.error("Error fetching profile:", error);
+      return { error: error.message, data: null };
+    }
+
+    // Include email from auth user
+    return { data: { ...data, email: user.email }, error: null };
+  } catch (err: any) {
+    console.error("Error in getProfile:", err);
+    return { error: err.message || "Failed to fetch profile", data: null };
   }
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (error) {
-    return { error: error.message, data: null };
-  }
-
-  // Include email from auth user
-  return { data: { ...data, email: user.email }, error: null };
 }
 
 export async function updateProfile(formData: FormData) {

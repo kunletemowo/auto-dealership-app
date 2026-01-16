@@ -604,42 +604,54 @@ export async function getCarListing(id: string) {
 }
 
 export async function getUserListings() {
-  const supabase = await createClient();
+  try {
+    // Check for environment variables early
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return { error: "Database connection not configured", data: null };
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const supabase = await createClient();
 
-  if (!user) {
-    return { error: "Not authenticated", data: null };
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return { error: "Not authenticated", data: null };
+    }
+
+    const { data, error } = await supabase
+      .from("car_listings")
+      .select(`
+        *,
+        car_images(id, image_url, position)
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching user listings:", error);
+      return { error: error.message, data: null };
+    }
+
+    // Sort by is_active (active first) then by created_at
+    if (data) {
+      data.sort((a: any, b: any) => {
+        // First sort by is_active (true first)
+        if (a.is_active !== b.is_active) {
+          return a.is_active ? -1 : 1;
+        }
+        // Then by created_at (newest first)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
+
+    return { data, error: null };
+  } catch (err: any) {
+    console.error("Error in getUserListings:", err);
+    return { error: err.message || "Failed to fetch listings", data: null };
   }
-
-  const { data, error } = await supabase
-    .from("car_listings")
-    .select(`
-      *,
-      car_images(id, image_url, position)
-    `)
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    return { error: error.message, data: null };
-  }
-
-  // Sort by is_active (active first) then by created_at
-  if (data) {
-    data.sort((a: any, b: any) => {
-      // First sort by is_active (true first)
-      if (a.is_active !== b.is_active) {
-        return a.is_active ? -1 : 1;
-      }
-      // Then by created_at (newest first)
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-  }
-
-  return { data, error: null };
 }
 
 export async function deleteCarListing(id: string) {
