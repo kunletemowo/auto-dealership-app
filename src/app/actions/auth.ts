@@ -19,8 +19,12 @@ export async function signUp(formData: FormData) {
       keyLength: supabaseKey?.length || 0,
     });
     
+    const missing = [];
+    if (!supabaseUrl) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+    if (!supabaseKey) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    
     return {
-      error: "Authentication service is not configured. Please check your Vercel environment variables and redeploy. Visit /debug-env to verify configuration.",
+      error: `Authentication service is not configured. Missing: ${missing.join(", ")}. Please add these in Vercel Dashboard → Settings → Environment Variables → Production, then redeploy.`,
     };
   }
 
@@ -105,8 +109,12 @@ export async function signIn(formData: FormData) {
       keyLength: supabaseKey?.length || 0,
     });
     
+    const missing = [];
+    if (!supabaseUrl) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+    if (!supabaseKey) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    
     return {
-      error: "Authentication service is not configured. Please check your Vercel environment variables and redeploy. Visit /debug-env to verify configuration.",
+      error: `Authentication service is not configured. Missing: ${missing.join(", ")}. Please add these in Vercel Dashboard → Settings → Environment Variables → Production, then redeploy.`,
     };
   }
 
