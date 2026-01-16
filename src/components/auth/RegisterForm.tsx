@@ -42,7 +42,7 @@ export function RegisterForm() {
         <div className="rounded-md bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
           <p className="font-semibold">Account created successfully!</p>
           <p className="mt-1">
-            Please check your email to confirm your account before signing in.
+            Signup successful! Please login to your account.
           </p>
         </div>
       </div>
