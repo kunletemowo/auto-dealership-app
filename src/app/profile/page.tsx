@@ -7,13 +7,14 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 export default async function ProfilePage() {
   unstable_noStore(); // Mark as dynamic since we use cookies/auth
   
-  const user = await getCurrentUser();
+  try {
+    const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login?redirect=/profile");
-  }
+    if (!user) {
+      redirect("/login?redirect=/profile");
+    }
 
-  const { data: profile, error } = await getProfile();
+    const { data: profile, error } = await getProfile();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -51,4 +52,13 @@ export default async function ProfilePage() {
       </div>
     </div>
   );
+  } catch (err: any) {
+    // If redirect throws, let it propagate (redirect uses throw internally)
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw err;
+    }
+    // Otherwise, log and show error
+    console.error("Error in ProfilePage:", err);
+    throw new Error(`Failed to load profile: ${err.message || 'Unknown error'}`);
+  }
 }

@@ -43,22 +43,58 @@ export async function getProfile() {
           .single();
 
         if (insertError || !newProfile) {
-          console.error("Error creating profile:", insertError);
-          return { error: "Failed to create profile", data: null };
+          console.error("Error creating profile:", {
+            insertError: insertError?.message,
+            insertErrorCode: insertError?.code,
+            insertErrorDetails: insertError,
+            userId: user.id,
+          });
+          return { 
+            error: `Failed to create profile: ${insertError?.message || "Unknown error"}`, 
+            data: null 
+          };
         }
 
         return { data: { ...newProfile, email: user.email }, error: null };
       }
 
-      console.error("Error fetching profile:", error);
+      console.error("Error fetching profile:", {
+        errorMessage: error.message,
+        errorCode: error.code,
+        errorDetails: error,
+        userId: user.id,
+      });
       return { error: error.message, data: null };
+    }
+
+    // Ensure city is not null (fix for profiles created before migration)
+    if (!data.city) {
+      console.warn(`Profile ${user.id} has null city, updating to 'Unknown'`);
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ city: "Unknown" })
+        .eq("id", user.id);
+      
+      if (updateError) {
+        console.error("Error updating profile city:", updateError);
+      } else {
+        data.city = "Unknown";
+      }
     }
 
     // Include email from auth user
     return { data: { ...data, email: user.email }, error: null };
   } catch (err: any) {
-    console.error("Error in getProfile:", err);
-    return { error: err.message || "Failed to fetch profile", data: null };
+    console.error("Unexpected error in getProfile:", {
+      message: err.message,
+      stack: err.stack,
+      name: err.name,
+      details: err,
+    });
+    return { 
+      error: `Failed to fetch profile: ${err.message || "Unknown error"}`, 
+      data: null 
+    };
   }
 }
 

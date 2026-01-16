@@ -35,6 +35,8 @@ export async function signUp(formData: FormData) {
       email: formData.get("email") as string,
       password: formData.get("password") as string,
       confirmPassword: formData.get("confirmPassword") as string,
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
     };
 
     // Validate input
@@ -45,14 +47,19 @@ export async function signUp(formData: FormData) {
       };
     }
 
-    const { email, password } = validation.data;
+    const { email, password, firstName, lastName } = validation.data;
 
-    // Sign up user
+    // Sign up user with metadata containing first_name and last_name
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          display_name: `${firstName.trim()} ${lastName.trim()}`,
+        },
       },
     });
 

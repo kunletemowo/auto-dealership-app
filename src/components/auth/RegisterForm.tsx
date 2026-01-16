@@ -56,6 +56,22 @@ export function RegisterForm() {
           {error}
         </div>
       )}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Input
+          type="text"
+          name="firstName"
+          label="First Name"
+          required
+          disabled={loading}
+        />
+        <Input
+          type="text"
+          name="lastName"
+          label="Last Name"
+          required
+          disabled={loading}
+        />
+      </div>
       <Input
         type="email"
         name="email"

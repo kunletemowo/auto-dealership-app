@@ -11,13 +11,14 @@ import { ListingStatusToggle } from "@/components/cars/ListingStatusToggle";
 export default async function MyListingsPage() {
   unstable_noStore(); // Mark as dynamic since we use cookies/auth
   
-  const user = await getCurrentUser();
+  try {
+    const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login?redirect=/dashboard/my-listings");
-  }
+    if (!user) {
+      redirect("/login?redirect=/dashboard/my-listings");
+    }
 
-  const { data: listings, error } = await getUserListings();
+    const { data: listings, error } = await getUserListings();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -120,4 +121,13 @@ export default async function MyListingsPage() {
       )}
     </div>
   );
+  } catch (err: any) {
+    // If redirect throws, let it propagate (redirect uses throw internally)
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw err;
+    }
+    // Otherwise, log and show error
+    console.error("Error in MyListingsPage:", err);
+    throw new Error(`Failed to load listings: ${err.message || 'Unknown error'}`);
+  }
 }
