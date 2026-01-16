@@ -57,13 +57,31 @@ export async function signUp(formData: FormData) {
     });
 
     if (error) {
+      // Log the full error for debugging
+      console.error("Supabase signUp error:", {
+        message: error.message,
+        status: error.status,
+        name: error.name,
+      });
+
       // Check for common error types
       if (error.message?.includes("fetch") || error.message?.includes("Failed to fetch")) {
         return {
           error: "Unable to connect to authentication service. Please check your internet connection and try again.",
         };
       }
-      return { error: error.message };
+      
+      // If it's a database/trigger error, provide helpful message
+      if (error.message?.toLowerCase().includes("database") || 
+          error.message?.toLowerCase().includes("trigger") ||
+          error.message?.toLowerCase().includes("saving new user")) {
+        return {
+          error: `Account creation failed: ${error.message}. Please check if the database trigger is set up correctly in Supabase.`,
+        };
+      }
+      
+      // Return the actual error message from Supabase
+      return { error: error.message || "An error occurred during signup. Please try again." };
     }
 
     // Profile is automatically created by database trigger (handle_new_user)
@@ -144,7 +162,8 @@ export async function signIn(formData: FormData) {
     }
 
     revalidatePath("/", "layout");
-    redirect("/dashboard/my-listings");
+    // Return success - let the client handle the redirect to avoid NEXT_REDIRECT error
+    return { success: true };
   } catch (err: any) {
     // Catch any unexpected errors
     console.error("Sign in error:", err);

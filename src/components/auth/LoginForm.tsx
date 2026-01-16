@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/forms/Button";
 import { Input } from "@/components/forms/Input";
 import { signIn } from "@/app/actions/auth";
@@ -12,18 +13,32 @@ interface LoginFormProps {
 export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (formData: FormData) => {
     setError("");
     setLoading(true);
 
-    const result = await signIn(formData);
+    try {
+      const result = await signIn(formData);
 
-    if (result?.error) {
-      setError(result.error);
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      } else if (result?.success) {
+        // Redirect on the client side to avoid NEXT_REDIRECT error
+        router.push(redirectTo);
+        router.refresh(); // Refresh to update auth state
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+        setLoading(false);
+      }
+    } catch (err: any) {
+      // Catch any unexpected errors
+      console.error("Login error:", err);
+      setError(err.message || "An unexpected error occurred. Please try again.");
       setLoading(false);
     }
-    // If successful, signIn will redirect
   };
 
   return (
