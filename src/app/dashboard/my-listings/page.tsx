@@ -5,7 +5,7 @@ import { unstable_noStore } from "next/cache";
 import Link from "next/link";
 import { CarCard } from "@/components/cars/CarCard";
 import { Button } from "@/components/forms/Button";
-import { deleteCarListing } from "@/app/actions/cars";
+import { deleteCarListingAction } from "@/app/actions/cars";
 import { ListingStatusToggle } from "@/components/cars/ListingStatusToggle";
 
 export default async function MyListingsPage() {
@@ -100,9 +100,11 @@ export default async function MyListingsPage() {
                         Edit
                       </Button>
                     </Link>
-                    <form action={async () => {
-                      await deleteCarListing(car.id);
-                    }} className="flex-1">
+                    <form 
+                      action={deleteCarListingAction}
+                      className="flex-1"
+                    >
+                      <input type="hidden" name="id" value={car.id} />
                       <Button
                         type="submit"
                         variant="outline"

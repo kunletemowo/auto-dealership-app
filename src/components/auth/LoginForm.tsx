@@ -15,11 +15,13 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (formData: FormData) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
+      const formData = new FormData(e.currentTarget);
       const result = await signIn(formData);
 
       if (result?.error) {
@@ -42,7 +44,7 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
   };
 
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
           {error}

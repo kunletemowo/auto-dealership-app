@@ -654,6 +654,14 @@ export async function getUserListings() {
   }
 }
 
+export async function deleteCarListingAction(formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) {
+    return;
+  }
+  await deleteCarListing(id);
+}
+
 export async function deleteCarListing(id: string) {
   const supabase = await createClient();
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/forms/Button";
@@ -12,6 +12,7 @@ import { createCarListing, updateCarListing } from "@/app/actions/cars";
 import { uploadCarImages } from "@/app/actions/images";
 import { ImageManager } from "./ImageManager";
 import { useToast } from "@/components/ui/Toast";
+import { CAR_MAKES, getModelsForMake } from "@/lib/data/car-makes-models";
 
 interface CarListingFormProps {
   listing?: any;
@@ -28,6 +29,15 @@ export function CarListingForm({ listing, mode = "create" }: CarListingFormProps
   const [existingImages, setExistingImages] = useState<Array<{ id: string; image_url: string; position: number }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Make autocomplete state
+  const [makeQuery, setMakeQuery] = useState(listing?.make || "");
+  const [selectedMake, setSelectedMake] = useState(listing?.make || "");
+  const [showMakeDropdown, setShowMakeDropdown] = useState(false);
+  const makeInputRef = useRef<HTMLDivElement>(null);
+
+  // Model dropdown state
+  const [selectedModel, setSelectedModel] = useState(listing?.model || "");
+
   // Load existing images when editing
   useEffect(() => {
     if (mode === "edit" && listing?.car_images) {
@@ -41,6 +51,55 @@ export function CarListingForm({ listing, mode = "create" }: CarListingFormProps
       setExistingImages(images);
     }
   }, [listing, mode]);
+
+  // Filter makes based on search query
+  const filteredMakes = useMemo(() => {
+    if (!makeQuery.trim()) {
+      return CAR_MAKES.slice(0, 10).map((make) => ({
+        value: make.value,
+        label: make.label,
+      }));
+    }
+    const query = makeQuery.toLowerCase();
+    return CAR_MAKES.filter((make) =>
+      make.label.toLowerCase().includes(query)
+    ).map((make) => ({
+      value: make.value,
+      label: make.label,
+    })).slice(0, 10);
+  }, [makeQuery]);
+
+  // Get model options based on selected make
+  const modelOptions = useMemo(() => {
+    if (!selectedMake) {
+      return [{ value: "", label: "Select make first" }];
+    }
+    return getModelsForMake(selectedMake);
+  }, [selectedMake]);
+
+  // Reset model when make changes
+  useEffect(() => {
+    if (selectedMake !== (listing?.make || "")) {
+      setSelectedModel("");
+    }
+  }, [selectedMake]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        makeInputRef.current &&
+        !makeInputRef.current.contains(event.target as Node)
+      ) {
+        setShowMakeDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Cleanup object URLs when component unmounts or images are removed
   useEffect(() => {
@@ -123,6 +182,26 @@ export function CarListingForm({ listing, mode = "create" }: CarListingFormProps
     setSelectedImages(newImages);
     setImagePreviews(newPreviews);
   };
+
+  // Initialize make and model from listing
+  useEffect(() => {
+    if (listing?.make) {
+      const make = CAR_MAKES.find(
+        (m) => m.value.toLowerCase() === listing.make.toLowerCase() ||
+               m.label.toLowerCase() === listing.make.toLowerCase()
+      );
+      if (make) {
+        setMakeQuery(make.label);
+        setSelectedMake(make.value);
+      } else {
+        setMakeQuery(listing.make);
+        setSelectedMake(listing.make);
+      }
+    }
+    if (listing?.model) {
+      setSelectedModel(listing.model.toLowerCase());
+    }
+  }, [listing]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -322,22 +401,69 @@ export function CarListingForm({ listing, mode = "create" }: CarListingFormProps
           Car Details
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            name="make"
-            label="Make"
-            placeholder="e.g., Honda"
-            required
-            disabled={loading}
-            defaultValue={listing?.make}
-          />
-          <Input
-            name="model"
-            label="Model"
-            placeholder="e.g., Civic"
-            required
-            disabled={loading}
-            defaultValue={listing?.model}
-          />
+          <div className="relative w-full" ref={makeInputRef}>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              Make <span className="text-red-500">*</span>
+            </label>
+            <input type="hidden" name="make" value={selectedMake} />
+            <Input
+              type="text"
+              placeholder="e.g., Honda"
+              required
+              disabled={loading}
+              value={makeQuery}
+              onChange={(e) => {
+                const value = e.target.value;
+                setMakeQuery(value);
+                setShowMakeDropdown(value.trim().length > 0);
+                
+                // Try to find exact match
+                const exactMatch = CAR_MAKES.find(
+                  (make) => make.label.toLowerCase() === value.toLowerCase()
+                );
+                if (exactMatch) {
+                  setSelectedMake(exactMatch.value);
+                } else {
+                  setSelectedMake(value);
+                }
+              }}
+              onFocus={() => {
+                if (makeQuery.trim().length > 0) {
+                  setShowMakeDropdown(true);
+                }
+              }}
+            />
+            {showMakeDropdown && filteredMakes.length > 0 && (
+              <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-zinc-300 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                {filteredMakes.map((make) => (
+                  <button
+                    key={make.value}
+                    type="button"
+                    onClick={() => {
+                      setMakeQuery(make.label);
+                      setSelectedMake(make.value);
+                      setShowMakeDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:bg-zinc-100 dark:focus:bg-zinc-800 focus:outline-none"
+                  >
+                    {make.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <Select
+              name="model"
+              label="Model"
+              options={modelOptions}
+              required
+              disabled={loading || !selectedMake}
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              key={`model-${selectedMake}-${selectedModel}`}
+            />
+          </div>
           <Select
             name="year"
             label="Year"
