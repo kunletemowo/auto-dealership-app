@@ -344,7 +344,7 @@ export async function searchUser(searchQuery: string) {
         } else {
           // Fallback: try to get from current user's session if it matches
           const { data: { user: currentUser } } = await supabase.auth.getUser();
-          if (currentUser?.id === profile.id) {
+          if (currentUser && currentUser.id === profile.id) {
             email = currentUser.email || "N/A";
           }
         }
