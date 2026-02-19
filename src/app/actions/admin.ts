@@ -423,7 +423,7 @@ export async function updateUserRole(
 
     // Check if trying to remove last admin
     if (role !== "admin") {
-      const { data: adminCount } = await supabase
+      const { count: adminCount } = await supabase
         .from("user_roles")
         .select("id", { count: "exact", head: true })
         .eq("role", "admin");
