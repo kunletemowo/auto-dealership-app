@@ -253,6 +253,17 @@ export function getModelsForMake(makeValue: string): { value: string; label: str
 }
 
 /**
+ * Check if a make string (value or label) exists in CAR_MAKES
+ */
+export function isKnownMake(make: string): boolean {
+  if (!make || !make.trim()) return false;
+  const m = make.trim().toLowerCase();
+  return CAR_MAKES.some(
+    (c) => c.value.toLowerCase() === m || c.label.toLowerCase() === m
+  );
+}
+
+/**
  * Filter models based on search query
  */
 export function filterModelsForMake(
