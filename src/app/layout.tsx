@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { Header } from "@/components/layout/Header";
@@ -32,7 +33,9 @@ export default function RootLayout({
       >
         <ToastProvider>
           <Header />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen">
+            <Suspense fallback={null}>{children}</Suspense>
+          </main>
           <Footer />
         </ToastProvider>
       </body>

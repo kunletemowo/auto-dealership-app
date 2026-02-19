@@ -6,11 +6,24 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/forms/Button";
 import { useRouter, usePathname } from "next/navigation";
 
+function UserMenuSkeleton() {
+  return (
+    <div className="flex items-center space-x-4">
+      <div className="h-9 w-20 animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800" />
+    </div>
+  );
+}
+
 export function UserMenu() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const checkUser = async () => {
     try {
@@ -102,12 +115,9 @@ export function UserMenu() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center space-x-4">
-        <div className="h-9 w-20 animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800" />
-      </div>
-    );
+  // Always match server render on first paint to avoid hydration mismatch
+  if (!mounted || loading) {
+    return <UserMenuSkeleton />;
   }
 
   if (user) {
