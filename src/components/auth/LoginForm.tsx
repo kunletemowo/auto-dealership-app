@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/forms/Button";
@@ -22,7 +22,6 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const captchaRef = useRef<{ resetCaptcha: () => void } | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,11 +40,9 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
 
       if (result?.error) {
         setError(result.error);
-        captchaRef.current?.resetCaptcha();
         setCaptchaToken(null);
         setLoading(false);
       } else if (result?.success) {
-        captchaRef.current?.resetCaptcha();
         setCaptchaToken(null);
         router.push(redirectTo);
         router.refresh();
@@ -84,7 +81,6 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
       {HCAPTCHA_SITE_KEY && (
         <div className="flex justify-center">
           <HCaptcha
-            ref={captchaRef}
             sitekey={HCAPTCHA_SITE_KEY}
             onVerify={(token) => setCaptchaToken(token)}
             onExpire={() => setCaptchaToken(null)}
