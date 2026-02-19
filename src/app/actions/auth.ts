@@ -152,10 +152,12 @@ export async function signIn(formData: FormData) {
     }
 
     const { email, password } = validation.data;
+    const captchaToken = formData.get("captchaToken") as string | null;
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      ...(captchaToken && { options: { captchaToken } }),
     });
 
     if (error) {
