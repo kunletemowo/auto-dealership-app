@@ -39,7 +39,13 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
       const result = await signIn(formData);
 
       if (result?.error) {
-        setError(result.error);
+        const isCaptchaError = /captcha verification process failed/i.test(result.error);
+        const message = isCaptchaError && !HCAPTCHA_SITE_KEY
+          ? "CAPTCHA is required for sign-in. Add NEXT_PUBLIC_HCAPTCHA_SITE_KEY to your project's environment variables (e.g. Vercel → Settings → Environment Variables) and redeploy so the CAPTCHA box appears."
+          : isCaptchaError
+            ? "CAPTCHA verification failed. Please complete the CAPTCHA above and try again."
+            : result.error;
+        setError(message);
         setCaptchaToken(null);
         setLoading(false);
       } else if (result?.success) {
