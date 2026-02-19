@@ -1,6 +1,8 @@
 import { LoginForm } from "@/components/auth/LoginForm";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 interface LoginPageProps {
   searchParams?: Promise<{ redirect?: string }> | { redirect?: string };
 }
@@ -8,14 +10,13 @@ interface LoginPageProps {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   let redirectTo = "/dashboard/my-listings";
   let redirectParam = "";
-  
+
   try {
-    const params = searchParams instanceof Promise ? await searchParams : (searchParams || {});
-    redirectTo = params.redirect || "/dashboard/my-listings";
-    redirectParam = params.redirect || "";
-  } catch (error) {
-    // If searchParams fails, use default redirect
-    console.error("Error reading searchParams:", error);
+    const params = searchParams instanceof Promise ? await searchParams : searchParams ?? {};
+    redirectTo = params.redirect ?? redirectTo;
+    redirectParam = params.redirect ?? "";
+  } catch {
+    // Use defaults if searchParams unavailable
   }
 
   return (
