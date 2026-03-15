@@ -2,32 +2,56 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function AdminLink() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
+    let cancelled = false;
     async function checkAdmin() {
+      setLoading(true);
       try {
         const response = await fetch("/api/admin/check", {
           credentials: "include",
           cache: "no-store",
           headers: { "Cache-Control": "no-cache" },
         });
+        if (cancelled) return;
         if (response.ok) {
           const data = await response.json();
           setIsAdmin(data.isAdmin === true);
         }
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        if (!cancelled) console.error("Error checking admin status:", error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     checkAdmin();
+    return () => { cancelled = true; };
+  }, [pathname]);
+
+  // Re-check when auth state changes (e.g. after login)
+  useEffect(() => {
+    function onAuthChange() {
+      setLoading(true);
+      fetch("/api/admin/check", {
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      })
+        .then((r) => r.ok ? r.json() : { isAdmin: false })
+        .then((data) => setIsAdmin(data.isAdmin === true))
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
+    window.addEventListener("auth-change", onAuthChange);
+    return () => window.removeEventListener("auth-change", onAuthChange);
   }, []);
 
   // Close dropdown when clicking outside

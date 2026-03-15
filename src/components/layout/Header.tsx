@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { AdminLink } from "@/components/admin/AdminLink";
 
 export function Header() {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -61,7 +62,7 @@ export function Header() {
           >
             Sell Your Car
           </Link>
-          
+          <AdminLink />
           <div ref={moreMenuRef} className="relative">
             <button
               type="button"

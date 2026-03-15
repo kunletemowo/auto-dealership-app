@@ -50,6 +50,7 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
         setLoading(false);
       } else if (result?.success) {
         setCaptchaToken(null);
+        window.dispatchEvent(new Event("auth-change"));
         router.push(redirectTo);
         router.refresh();
       } else {
