@@ -6,7 +6,7 @@ export default function AboutPage() {
           About Us
         </h1>
         <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-          Welcome to Kuldae Autos, your trusted partner to connect buyers and sellers for the best car deals in Canada.
+          Welcome to Kuldae Autos, your trusted partner to connect buyers and sellers for the best car deals.
         </p>
 
         <div className="mt-8 space-y-6">
@@ -16,7 +16,7 @@ export default function AboutPage() {
             </h2>
             <p className="mt-2 text-zinc-600 dark:text-zinc-400">
               Our mission is to simplify the car buying and selling experience by providing a
-              transparent, user-friendly platform that connects buyers and sellers across Canada.
+              transparent, user-friendly platform that connects buyers and sellers across the world.
               We are committed to making vehicle transactions seamless and trustworthy.
             </p>
           </section>
