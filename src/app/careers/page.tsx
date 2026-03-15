@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "Careers",
+  description:
+    "Join Kuldae Autos. We're hiring for engineering, design, and customer success roles. Help us build Canada's trusted car marketplace.",
+  alternates: { canonical: `${siteUrl}/careers` },
+};
+
 export default function CareersPage() {
   const positions = [
     {

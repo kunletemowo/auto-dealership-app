@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { CarSearchForm } from "@/components/cars/CarSearchForm";
 import { AdvancedFilters } from "@/components/cars/AdvancedFilters";
 import { CarCard } from "@/components/cars/CarCard";
@@ -6,6 +7,15 @@ import { Pagination } from "@/components/cars/Pagination";
 import { getCarListings } from "@/app/actions/cars";
 import Link from "next/link";
 import { unstable_noStore } from "next/cache";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "Browse Cars",
+  description:
+    "Browse and search thousands of car listings across Canada. Filter by make, model, price, location, and more. Find your next vehicle today.",
+  alternates: { canonical: `${siteUrl}/cars` },
+};
 
 interface CarsPageProps {
   searchParams: Promise<{

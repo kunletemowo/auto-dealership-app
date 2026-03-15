@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import { SpecRequestForm } from "@/components/spec-requests/SpecRequestForm";
 import { unstable_noStore } from "next/cache";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "Order My Spec",
+  description:
+    "Tell us what you're looking for. Submit your ideal car specifications and we'll help match you with the right vehicles on Kuldae Autos.",
+  alternates: { canonical: `${siteUrl}/order-spec` },
+};
 
 export default function OrderSpecPage() {
   unstable_noStore();

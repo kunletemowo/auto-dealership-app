@@ -506,6 +506,34 @@ export async function getCarListings(filters?: {
   }
 }
 
+/** Returns active listing IDs for sitemap / SEO. */
+export async function getActiveCarListingIds(): Promise<{ id: string }[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("car_listings")
+      .select("id")
+      .eq("is_active", true);
+    if (error) return [];
+    return (data || []).map((row) => ({ id: String(row.id) }));
+  } catch {
+    return [];
+  }
+}
+
+/** Fetch listing for metadata only (no view count increment). */
+export async function getCarListingMeta(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("car_listings")
+    .select("id, title, description, price, currency, make, model, year, car_images(image_url, position)")
+    .eq("id", id)
+    .eq("is_active", true)
+    .single();
+  if (error || !data) return null;
+  return data;
+}
+
 export async function getCarListing(id: string) {
   const supabase = await createClient();
 

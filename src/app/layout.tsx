@@ -5,6 +5,7 @@ import "../globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToastProvider } from "@/components/ui/Toast";
+import { OrganizationJsonLd } from "@/components/seo/OrganizationJsonLd";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,9 +17,39 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
 export const metadata: Metadata = {
-  title: "AutoSales - Buy and Sell Cars",
-  description: "The best platform to buy and sell cars. Browse thousands of listings or list your car for free.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Kuldae Autos – Buy and Sell Cars in Canada",
+    template: "%s | Kuldae Autos",
+  },
+  description:
+    "The best platform to buy and sell cars in Canada. Browse thousands of listings or list your car for free. Connect with buyers and sellers.",
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Kuldae Autos",
+    title: "Kuldae Autos – Buy and Sell Cars in Canada",
+    description:
+      "The best platform to buy and sell cars in Canada. Browse listings or list your car for free.",
+    images: [{ url: "/kuldae-autos-logo.png", width: 1200, height: 630, alt: "Kuldae Autos" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kuldae Autos – Buy and Sell Cars in Canada",
+    description:
+      "The best platform to buy and sell cars in Canada. Browse listings or list your car for free.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -31,6 +62,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <OrganizationJsonLd />
         <ToastProvider>
           <Header />
           <main className="min-h-screen">

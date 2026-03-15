@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with Kuldae Autos. Questions, support, or feedback – we're here to help with your car buying or selling journey.",
+  alternates: { canonical: `${siteUrl}/contact` },
+};
+
 export default function ContactPage() {
   return (
     <div className="container mx-auto px-4 py-12">

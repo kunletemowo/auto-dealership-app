@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "Learn about Kuldae Autos – your trusted Canadian car marketplace. Our mission, values, and how we connect buyers and sellers.",
+  alternates: { canonical: `${siteUrl}/about` },
+};
+
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-12">

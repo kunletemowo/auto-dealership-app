@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "Car Value Calculator",
+  description:
+    "Get a free estimate of your car's market value. Based on make, model, year, mileage, and condition. Canadian market.",
+  alternates: { canonical: `${siteUrl}/car-value-calculator` },
+};
+
 export default function CarValueCalculatorPage() {
   return (
     <div className="container mx-auto px-4 py-12">

@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "Protection Plans",
+  description:
+    "Compare extended warranties, maintenance plans, and protection options for your vehicle. Third-party coverage for new and used cars.",
+  alternates: { canonical: `${siteUrl}/protection-plans` },
+};
+
 export default function ProtectionPlansPage() {
   return (
     <div className="container mx-auto px-4 py-12">

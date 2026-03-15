@@ -29,6 +29,7 @@ export function CarGallery({ images, title }: CarGalleryProps) {
           alt={`${title} - Image ${selectedImage + 1}`}
           width={800}
           height={600}
+          sizes="(max-width: 1024px) 100vw, 800px"
           className="h-full w-full object-cover"
           priority
         />
@@ -50,7 +51,9 @@ export function CarGallery({ images, title }: CarGalleryProps) {
                 alt={`${title} - Thumbnail ${index + 1}`}
                 width={200}
                 height={150}
+                sizes="100px"
                 className="h-full w-full object-cover"
+                loading="lazy"
               />
             </button>
           ))}

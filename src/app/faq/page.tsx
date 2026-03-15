@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+
+export const metadata: Metadata = {
+  title: "FAQ",
+  description:
+    "Frequently asked questions about listing, buying, and selling cars on Kuldae Autos. Fees, safety, and how to get started.",
+  alternates: { canonical: `${siteUrl}/faq` },
+};
+
 export default function FAQPage() {
   const faqs = [
     {

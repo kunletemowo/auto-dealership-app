@@ -1,13 +1,49 @@
+import type { Metadata } from "next";
 import { CarGallery } from "@/components/cars/CarGallery";
-import { getCarListing } from "@/app/actions/cars";
+import { getCarListing, getCarListingMeta } from "@/app/actions/cars";
 import { notFound } from "next/navigation";
 import { ContactSeller } from "@/components/cars/ContactSeller";
 import { SaveButton } from "@/components/cars/SaveButton";
+import { CarListingJsonLd } from "@/components/seo/CarListingJsonLd";
 import Image from "next/image";
 import { unstable_noStore } from "next/cache";
 
 interface CarDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: CarDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const listing = await getCarListingMeta(id);
+  if (!listing) {
+    return { title: "Listing Not Found" };
+  }
+  const title = [listing.year, listing.make, listing.model].filter(Boolean).join(" ") || listing.title;
+  const desc = (listing.description || "").replace(/\s+/g, " ").trim().slice(0, 160);
+  const price = listing.currency && listing.price != null
+    ? `${listing.currency} ${Number(listing.price).toLocaleString()}`
+    : "";
+  const summary = price ? `${price} – ${desc}` : desc;
+  const images = (listing.car_images as { image_url: string; position: number }[] | null) || [];
+  const sorted = [...images].sort((a, b) => a.position - b.position);
+  const firstImage = sorted[0]?.image_url;
+  return {
+    title,
+    description: summary || undefined,
+    openGraph: {
+      title,
+      description: summary || undefined,
+      images: firstImage ? [{ url: firstImage, width: 1200, height: 630, alt: listing.title }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: summary || undefined,
+    },
+    alternates: {
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"}/cars/${id}`,
+    },
+  };
 }
 
 export default async function CarDetailPage({ params }: CarDetailPageProps) {
@@ -29,12 +65,26 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   const sellerAvatar = car.profiles?.avatar_url || null;
   
   // Format seller name with account type
-  const sellerDisplayName = sellerAccountType === "business" 
+  const sellerDisplayName = sellerAccountType === "business"
     ? `${sellerName} (Business)`
     : `${sellerName} (Individual)`;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      <CarListingJsonLd
+        id={car.id}
+        title={car.title}
+        description={car.description || ""}
+        price={parseFloat(car.price)}
+        currency={car.currency || "CAD"}
+        make={car.make || ""}
+        model={car.model || ""}
+        year={car.year}
+        mileage={car.mileage ?? 0}
+        condition={car.condition || "used"}
+        imageUrls={images}
+      />
+      <div className="container mx-auto px-4 py-8">
       <div className="grid gap-8 lg:grid-cols-2">
         <div>
           <CarGallery images={images} title={car.title} />
@@ -172,5 +222,6 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
