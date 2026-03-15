@@ -12,7 +12,7 @@ export function Hero() {
             Browse thousands of cars from verified sellers. List your car for
             free and connect with serious buyers in your area.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
             <Link
               href="/cars"
               className="rounded-full bg-zinc-900 px-6 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
@@ -24,6 +24,12 @@ export function Hero() {
               className="text-base font-semibold leading-6 text-zinc-900 transition-colors hover:text-zinc-700 dark:text-zinc-50 dark:hover:text-zinc-300"
             >
               List Your Car <span aria-hidden="true">→</span>
+            </Link>
+            <Link
+              href="/order-spec"
+              className="rounded-full border-2 border-zinc-900 px-6 py-3 text-base font-semibold text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-zinc-50 dark:text-zinc-50 dark:hover:bg-zinc-800"
+            >
+              Order My Spec
             </Link>
           </div>
         </div>
