@@ -32,6 +32,7 @@ export function SortControls() {
     { value: "year_desc", label: "Year: Newest" },
     { value: "year_asc", label: "Year: Oldest" },
     { value: "mileage_asc", label: "Mileage: Low to High" },
+    { value: "mileage_desc", label: "Mileage: High to Low" },
   ];
 
   const currentValue = `${currentSort}_${currentSortOrder}`;
