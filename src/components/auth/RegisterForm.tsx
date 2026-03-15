@@ -1,39 +1,59 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/forms/Button";
 import { Input } from "@/components/forms/Input";
 import { signUp } from "@/app/actions/auth";
+
+const HCaptcha = dynamic(
+  () => import("@hcaptcha/react-hcaptcha").then((mod) => mod.default),
+  { ssr: false }
+);
+
+const HCAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY?.trim() ?? "";
 
 export function RegisterForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    if (HCAPTCHA_SITE_KEY && !captchaToken) {
+      setError("Please complete the captcha verification.");
+      return;
+    }
     setLoading(true);
 
     try {
       const formData = new FormData(e.currentTarget);
+      if (captchaToken) formData.set("captchaToken", captchaToken);
       const result = await signUp(formData);
 
       if (result?.error) {
-        setError(result.error);
+        const isCaptchaError = /captcha verification process failed/i.test(result.error);
+        const message = isCaptchaError && !HCAPTCHA_SITE_KEY
+          ? "CAPTCHA is required for sign-up. Add NEXT_PUBLIC_HCAPTCHA_SITE_KEY to your project's environment variables (e.g. Vercel → Settings → Environment Variables) and redeploy so the CAPTCHA box appears."
+          : isCaptchaError
+            ? "CAPTCHA verification failed. Please complete the CAPTCHA below and try again."
+            : result.error;
+        setError(message);
+        setCaptchaToken(null);
         setLoading(false);
       } else if (result?.success) {
+        setCaptchaToken(null);
         setSuccess(true);
         setLoading(false);
       } else {
-        // Handle case where result is undefined or unexpected
         setError("An unexpected error occurred. Please try again.");
         setLoading(false);
       }
-    } catch (err: any) {
-      // Catch any unexpected errors from the server action
+    } catch (err: unknown) {
       console.error("Registration error:", err);
-      setError(err.message || "An unexpected error occurred. Please try again.");
+      setError(err instanceof Error ? err.message : "An unexpected error occurred. Please try again.");
       setLoading(false);
     }
   };
@@ -97,6 +117,15 @@ export function RegisterForm() {
         disabled={loading}
         minLength={6}
       />
+      {HCAPTCHA_SITE_KEY && (
+        <div className="flex justify-center">
+          <HCaptcha
+            sitekey={HCAPTCHA_SITE_KEY}
+            onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken(null)}
+          />
+        </div>
+      )}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Creating account..." : "Create Account"}
       </Button>

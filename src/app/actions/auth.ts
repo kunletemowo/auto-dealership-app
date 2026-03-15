@@ -48,19 +48,26 @@ export async function signUp(formData: FormData) {
     }
 
     const { email, password, firstName, lastName } = validation.data;
+    const captchaToken = formData.get("captchaToken") as string | null;
 
-    // Sign up user with metadata containing first_name and last_name
+    const signUpOptions: {
+      emailRedirectTo?: string;
+      data?: { first_name: string; last_name: string; display_name: string };
+      captchaToken?: string;
+    } = {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
+      data: {
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        display_name: `${firstName.trim()} ${lastName.trim()}`,
+      },
+    };
+    if (captchaToken) signUpOptions.captchaToken = captchaToken;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
-        data: {
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          display_name: `${firstName.trim()} ${lastName.trim()}`,
-        },
-      },
+      options: signUpOptions,
     });
 
     if (error) {
@@ -79,15 +86,19 @@ export async function signUp(formData: FormData) {
       }
       
       // If it's a database/trigger error, provide helpful message
-      if (error.message?.toLowerCase().includes("database") || 
+      if (error.message?.toLowerCase().includes("database") ||
           error.message?.toLowerCase().includes("trigger") ||
           error.message?.toLowerCase().includes("saving new user")) {
         return {
           error: `Account creation failed: ${error.message}. Please check if the database trigger is set up correctly in Supabase.`,
         };
       }
-      
-      // Return the actual error message from Supabase
+
+      // Captcha error: surface a clear message (handled in RegisterForm for env-key hint)
+      if (error.message?.toLowerCase().includes("captcha")) {
+        return { error: error.message };
+      }
+
       return { error: error.message || "An error occurred during signup. Please try again." };
     }
 
