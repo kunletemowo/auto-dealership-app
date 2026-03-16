@@ -8,10 +8,10 @@
 -- 1. Check how many rows have null slug (optional)
 -- SELECT count(*) FROM car_listings WHERE slug IS NULL;
 
--- 2. Backfill any rows with null slug
+-- 2. Backfill any rows with null slug (lower title FIRST so capitals are not stripped)
 UPDATE car_listings
 SET slug = (
-  trim(both '-' from regexp_replace(lower(regexp_replace( coalesce(title, 'listing'), '[^a-z0-9]+', '-', 'g')), '-+', '-', 'g'))
+  trim(both '-' from regexp_replace(regexp_replace(lower(coalesce(title, 'listing')), '[^a-z0-9]+', '-', 'g'), '-+', '-', 'g'))
   || '-'
   || left(replace(id::text, '-', ''), 8)
 )

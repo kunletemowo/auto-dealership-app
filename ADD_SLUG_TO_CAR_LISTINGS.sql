@@ -13,10 +13,10 @@ ADD COLUMN IF NOT EXISTS slug TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS car_listings_slug_key ON car_listings (slug) WHERE slug IS NOT NULL;
 
 -- 3. Backfill existing rows: slug = slugify(title) + '-' + first 8 hex chars of id (no hyphens)
--- Matches app's generateListingSlug: lowercase, replace non-alphanumeric with hyphen, trim, then -shortId
+-- IMPORTANT: Lower the title FIRST so uppercase letters are not treated as non-alphanumeric by [^a-z0-9]
 UPDATE car_listings
 SET slug = (
-  trim(both '-' from regexp_replace(lower(regexp_replace( coalesce(title, 'listing'), '[^a-z0-9]+', '-', 'g')), '-+', '-', 'g'))
+  trim(both '-' from regexp_replace(regexp_replace(lower(coalesce(title, 'listing')), '[^a-z0-9]+', '-', 'g'), '-+', '-', 'g'))
   || '-'
   || left(replace(id::text, '-', ''), 8)
 )
