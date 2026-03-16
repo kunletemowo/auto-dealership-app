@@ -277,6 +277,7 @@ export function CarListingForm({ listing, mode = "create" }: CarListingFormProps
     { value: "CAD", label: "CAD ($)" },
     { value: "USD", label: "USD ($)" },
     { value: "EUR", label: "EUR (€)" },
+    { value: "NGN", label: "NGN (₦)" },
   ];
 
   const currentYear = new Date().getFullYear();

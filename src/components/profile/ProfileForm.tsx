@@ -518,7 +518,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
             name="phone"
             label="Phone Number"
             type="tel"
-            placeholder="+1 (555) 123-4567"
+            placeholder="+1 (555) 123-4567 or +234 801 234 5678"
             disabled={loading}
             value={phoneValue}
             onChange={handlePhoneChange}
