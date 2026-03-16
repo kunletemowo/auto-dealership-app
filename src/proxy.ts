@@ -1,7 +1,47 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/** Match UUID (with or without hyphens). */
+function isUuid(param: string): boolean {
+  const hex = param.replace(/-/g, "");
+  return hex.length === 32 && /^[0-9a-fA-F]{32}$/.test(hex);
+}
+
 export async function proxy(request: NextRequest) {
+  // Redirect GET /cars/[uuid] to /cars/[slug] when listing has a slug (before session refresh)
+  const { pathname } = request.nextUrl;
+  const carsMatch = pathname.match(/^\/cars\/([^/]+)\/?$/);
+  if (request.method === "GET" && carsMatch) {
+    const param = carsMatch[1];
+    if (isUuid(param)) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createServerClient(supabaseUrl, supabaseKey, {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll() {
+              // No-op for this read-only slug lookup
+            },
+          },
+        });
+        const { data } = await supabase
+          .from("car_listings")
+          .select("slug")
+          .eq("id", param)
+          .eq("is_active", true)
+          .maybeSingle();
+        if (data?.slug) {
+          const url = request.nextUrl.clone();
+          url.pathname = `/cars/${data.slug}`;
+          return NextResponse.redirect(url, 308);
+        }
+      }
+    }
+  }
+
   // Check if environment variables are set
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -23,7 +63,7 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({

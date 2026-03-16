@@ -228,6 +228,7 @@ export function CarListingForm({ listing, mode = "create" }: CarListingFormProps
       }
 
       const listingId = result?.listingId || listing?.id;
+      const slug = result?.slug ?? listing?.slug;
 
       // If images were selected, upload them
       if (selectedImages.length > 0 && listingId) {
@@ -238,14 +239,14 @@ export function CarListingForm({ listing, mode = "create" }: CarListingFormProps
           setError(`${mode === "edit" ? "Listing updated" : "Listing created"} but image upload failed: ${uploadResult.error}`);
           setLoading(false);
           // Still redirect to the listing page even if images failed
-          router.push(`/cars/${listingId}`);
+          router.push(`/cars/${slug || listingId}`);
           return;
         }
       }
 
       showToast(`Listing ${mode === "edit" ? "updated" : "created"} successfully!`, "success");
-      // Redirect to the listing page
-      router.push(`/cars/${listingId}`);
+      // Redirect to the listing page (use slug for human-readable URL)
+      router.push(`/cars/${slug || listingId}`);
     } catch (err: any) {
       const errorMessage = err.message || "An error occurred";
       setError(errorMessage);

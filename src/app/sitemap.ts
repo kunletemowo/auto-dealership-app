@@ -20,9 +20,9 @@ const staticRoutes: MetadataRoute.Sitemap = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const ids = await getActiveCarListingIds();
-  const carEntries: MetadataRoute.Sitemap = ids.map(({ id }) => ({
-    url: `${baseUrl}/cars/${id}`,
+  const listings = await getActiveCarListingIds();
+  const carEntries: MetadataRoute.Sitemap = listings.map(({ id, slug }) => ({
+    url: `${baseUrl}/cars/${slug || id}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.7,

@@ -80,6 +80,7 @@ export async function FeaturedListings() {
                 <CarCard
                   key={car.id}
                   id={car.id}
+                  slug={car.slug}
                   title={car.title}
                   price={parseFloat(car.price)}
                   location={location}

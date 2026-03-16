@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { CarGallery } from "@/components/cars/CarGallery";
 import { getCarListing, getCarListingMeta } from "@/app/actions/cars";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ContactSeller } from "@/components/cars/ContactSeller";
 import { SaveButton } from "@/components/cars/SaveButton";
 import { CarListingJsonLd } from "@/components/seo/CarListingJsonLd";
 import Image from "next/image";
 import { unstable_noStore } from "next/cache";
+import { isUuid } from "@/lib/utils/slug";
+
+// Ensure this route is never cached so UUID→slug redirect and fresh data always run
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface CarDetailPageProps {
   params: Promise<{ id: string }>;
@@ -41,7 +46,7 @@ export async function generateMetadata({ params }: CarDetailPageProps): Promise<
       description: summary || undefined,
     },
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"}/cars/${id}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"}/cars/${listing.slug || listing.id}`,
     },
   };
 }
@@ -50,11 +55,16 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   // Prevent caching to ensure view counts update on each visit
   unstable_noStore();
   
-  const { id } = await params;
-  const { data: car, error } = await getCarListing(id);
+  const { id: idOrSlug } = await params;
+  const { data: car, error } = await getCarListing(idOrSlug);
 
   if (error || !car) {
     notFound();
+  }
+
+  // Redirect to canonical slug URL when user opened the page with UUID and listing has a slug
+  if (car.slug && isUuid(idOrSlug) && idOrSlug !== car.slug) {
+    redirect(`/cars/${car.slug}`);
   }
 
   const images = (car.car_images || []).map((img: any) => img.image_url);
@@ -63,6 +73,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   const sellerId = car.profiles?.id || car.user_id;
   const sellerPhone = car.profiles?.phone || null;
   const sellerAvatar = car.profiles?.avatar_url || null;
+  const sellerEmail = car.profiles?.email ?? null;
   
   // Format seller name with account type
   const sellerDisplayName = sellerAccountType === "business"
@@ -73,6 +84,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     <>
       <CarListingJsonLd
         id={car.id}
+        slug={car.slug}
         title={car.title}
         description={car.description || ""}
         price={parseFloat(car.price)}
@@ -204,6 +216,16 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
                 <p className="text-zinc-600 dark:text-zinc-400">
                   Listed by: <span className="font-medium text-zinc-900 dark:text-zinc-50">{sellerDisplayName}</span>
                 </p>
+                {sellerEmail && (
+                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    <a
+                      href={`mailto:${sellerEmail}`}
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {sellerEmail}
+                    </a>
+                  </p>
+                )}
                 {sellerAccountType === "business" && (
                   <p className="text-sm text-zinc-500 dark:text-zinc-400">
                     Business Account

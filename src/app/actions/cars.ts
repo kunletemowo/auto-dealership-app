@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isUuid, generateListingSlug } from "@/lib/utils/slug";
 import { carListingSchema } from "@/lib/validators/car";
 import { getLocationCoordinates, calculateDistance } from "@/lib/utils/distance";
 
@@ -73,9 +75,15 @@ export async function createCarListing(formData: FormData) {
     return { error: error.message };
   }
 
+  const slug = generateListingSlug(listingData.title, listing.id);
+  await supabase
+    .from("car_listings")
+    .update({ slug })
+    .eq("id", listing.id);
+
   revalidatePath("/cars");
   revalidatePath("/dashboard/my-listings");
-  return { success: true, listingId: listing.id };
+  return { success: true, listingId: listing.id, slug };
 }
 
 export async function getCarListings(filters?: {
@@ -506,51 +514,61 @@ export async function getCarListings(filters?: {
   }
 }
 
-/** Returns active listing IDs for sitemap / SEO. */
-export async function getActiveCarListingIds(): Promise<{ id: string }[]> {
+/** Returns active listing IDs and slugs for sitemap / SEO. Use slug in URL when present. */
+export async function getActiveCarListingIds(): Promise<{ id: string; slug: string | null }[]> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("car_listings")
-      .select("id")
+      .select("id, slug")
       .eq("is_active", true);
     if (error) return [];
-    return (data || []).map((row) => ({ id: String(row.id) }));
+    return (data || []).map((row: { id: string; slug?: string | null }) => ({
+      id: String(row.id),
+      slug: row.slug ?? null,
+    }));
   } catch {
     return [];
   }
 }
 
-/** Fetch listing for metadata only (no view count increment). */
-export async function getCarListingMeta(id: string) {
+/** Fetch listing for metadata only (no view count increment). Resolves by id or slug. */
+export async function getCarListingMeta(idOrSlug: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const byId = isUuid(idOrSlug);
+  const query = supabase
     .from("car_listings")
-    .select("id, title, description, price, currency, make, model, year, car_images(image_url, position)")
-    .eq("id", id)
-    .eq("is_active", true)
-    .single();
+    .select("id, slug, title, description, price, currency, make, model, year, car_images(image_url, position)")
+    .eq("is_active", true);
+  const { data, error } = await (byId ? query.eq("id", idOrSlug) : query.eq("slug", idOrSlug)).single();
   if (error || !data) return null;
   return data;
 }
 
-export async function getCarListing(id: string) {
+export async function getCarListing(idOrSlug: string) {
   const supabase = await createClient();
 
-  // Fetch current listing data first
-  const { data: initialData, error: fetchError } = await supabase
+  // Resolve by id (UUID) or slug
+  const byId = isUuid(idOrSlug);
+  const query = supabase
     .from("car_listings")
     .select(`
       *,
       car_images(id, image_url, position),
       profiles(id, display_name, phone, account_type, avatar_url)
     `)
-    .eq("id", id)
-    .single();
+    .eq("is_active", true);
+
+  const { data: initialData, error: fetchError } = await (byId
+    ? query.eq("id", idOrSlug)
+    : query.eq("slug", idOrSlug)
+  ).single();
 
   if (fetchError || !initialData) {
     return { error: fetchError?.message || "Listing not found", data: null };
   }
+
+  const id = initialData.id;
 
   // Increment view count using database function (preferred) or direct update (fallback)
   // The database function bypasses RLS restrictions and ensures atomic updates
@@ -621,11 +639,28 @@ export async function getCarListing(id: string) {
   // The view count is updated in the database, and unstable_noStore() in the page
   // component ensures fresh data is fetched on each request
 
-  // Return data with the actual updated view count from the database
-  // This ensures both detail page and listing page show the same count
+  // Fetch seller email from auth.users (not in profiles) when admin client is available
+  let sellerEmail: string | null = null;
+  const sellerId = initialData.user_id;
+  if (sellerId) {
+    const adminClient = createAdminClient();
+    if (adminClient) {
+      try {
+        const { data: authUser } = await adminClient.auth.admin.getUserById(sellerId);
+        if (authUser?.user?.email) sellerEmail = authUser.user.email;
+      } catch {
+        // Ignore; seller email will remain null
+      }
+    }
+  }
+
+  // Return data with the actual updated view count and seller email; include slug for canonical URLs
   const updatedData = {
     ...initialData,
     view_count: newViewCount,
+    profiles: initialData.profiles
+      ? { ...initialData.profiles, email: sellerEmail ?? undefined }
+      : initialData.profiles,
   };
 
   return { data: updatedData, error: null };
@@ -784,8 +819,9 @@ export async function updateCarListing(id: string, formData: FormData) {
   }
 
   const listingData = validation.data;
+  const slug = generateListingSlug(listingData.title, id);
 
-  // Update car listing
+  // Update car listing (include slug for human-readable URLs)
   const { error: updateError } = await supabase
     .from("car_listings")
     .update({
@@ -803,6 +839,7 @@ export async function updateCarListing(id: string, formData: FormData) {
       location_region: listingData.locationRegion,
       location_country: listingData.locationCountry,
       condition: listingData.condition,
+      slug,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -812,6 +849,7 @@ export async function updateCarListing(id: string, formData: FormData) {
   }
 
   revalidatePath(`/cars/${id}`);
+  revalidatePath(`/cars/${slug}`);
   revalidatePath("/dashboard/my-listings");
-  return { success: true, listingId: id };
+  return { success: true, listingId: id, slug };
 }

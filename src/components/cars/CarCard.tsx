@@ -6,6 +6,7 @@ import { SaveButton } from "./SaveButton";
 
 interface CarCardProps {
   id: string;
+  slug?: string | null;
   title: string;
   price: number;
   location: string;
@@ -19,6 +20,7 @@ interface CarCardProps {
 
 export function CarCard({
   id,
+  slug,
   title,
   price,
   location,
@@ -30,11 +32,12 @@ export function CarCard({
   viewCount,
 }: CarCardProps) {
   const displayTitle = make && model ? `${year} ${make} ${model}` : title;
+  const href = `/cars/${slug || id}`;
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg bg-white shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-900">
       <div className="relative">
-        <Link href={`/cars/${id}`} className="flex flex-col flex-1">
+        <Link href={href} className="flex flex-col flex-1">
           <div className="relative aspect-video w-full overflow-hidden bg-zinc-200 dark:bg-zinc-800">
             {imageUrl ? (
               <Image
@@ -58,7 +61,7 @@ export function CarCard({
         </div>
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <Link href={`/cars/${id}`}>
+        <Link href={href}>
           <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-zinc-700 dark:text-zinc-50 dark:group-hover:text-zinc-300">
             {displayTitle}
           </h3>

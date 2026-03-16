@@ -99,6 +99,7 @@ export async function getSavedListings() {
         created_at,
         car_listings(
           id,
+          slug,
           title,
           make,
           model,

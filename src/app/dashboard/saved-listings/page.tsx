@@ -66,6 +66,7 @@ export default async function SavedListingsPage() {
               <CarCard
                 key={car.id}
                 id={car.id}
+                slug={car.slug}
                 title={car.title}
                 price={parseFloat(car.price)}
                 location={`${car.location_city}, ${car.location_region}`}

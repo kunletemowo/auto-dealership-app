@@ -2,6 +2,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
 
 interface CarListingJsonLdProps {
   id: string;
+  slug?: string | null;
   title: string;
   description: string;
   price: number;
@@ -16,6 +17,7 @@ interface CarListingJsonLdProps {
 
 export function CarListingJsonLd({
   id,
+  slug,
   title,
   description,
   price,
@@ -27,7 +29,7 @@ export function CarListingJsonLd({
   condition,
   imageUrls,
 }: CarListingJsonLdProps) {
-  const url = `${siteUrl}/cars/${id}`;
+  const url = `${siteUrl}/cars/${slug || id}`;
   const product = {
     "@context": "https://schema.org",
     "@type": "Product",

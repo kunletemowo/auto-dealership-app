@@ -59,6 +59,7 @@ export default async function MyListingsPage() {
                 <div className={`relative ${!car.is_active ? "opacity-60" : ""}`}>
                   <CarCard
                     id={car.id}
+                    slug={car.slug}
                     title={car.title}
                     price={parseFloat(car.price)}
                     location={`${car.location_city}, ${car.location_region}`}
@@ -95,7 +96,7 @@ export default async function MyListingsPage() {
                     isActive={car.is_active}
                   />
                   <div className="flex space-x-2">
-                    <Link href={`/cars/${car.id}/edit`} className="flex-1">
+                    <Link href={`/cars/${car.slug || car.id}/edit`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full">
                         Edit
                       </Button>
