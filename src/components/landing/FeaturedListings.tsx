@@ -83,6 +83,7 @@ export async function FeaturedListings() {
                   slug={car.slug}
                   title={car.title}
                   price={parseFloat(car.price)}
+                  currency={car.currency}
                   location={location}
                   year={car.year}
                   mileage={car.mileage}

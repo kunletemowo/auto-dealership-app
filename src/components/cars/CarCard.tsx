@@ -3,12 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SaveButton } from "./SaveButton";
+import { formatMoney } from "@/lib/utils/money";
 
 interface CarCardProps {
   id: string;
   slug?: string | null;
   title: string;
   price: number;
+  currency?: string | null;
   location: string;
   year?: number;
   mileage?: number;
@@ -23,6 +25,7 @@ export function CarCard({
   slug,
   title,
   price,
+  currency,
   location,
   year,
   mileage,
@@ -33,6 +36,7 @@ export function CarCard({
 }: CarCardProps) {
   const displayTitle = make && model ? `${year} ${make} ${model}` : title;
   const href = `/cars/${slug || id}`;
+  const formattedPrice = formatMoney(price, currency || "CAD");
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg bg-white shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-900">
@@ -75,7 +79,7 @@ export function CarCard({
           )}
         </div>
         <p className="mt-auto pt-2 text-xl font-bold text-zinc-900 dark:text-zinc-50">
-          ${price.toLocaleString()}
+          {formattedPrice}
         </p>
       </div>
     </div>

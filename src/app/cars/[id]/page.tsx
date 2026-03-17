@@ -8,6 +8,7 @@ import { CarListingJsonLd } from "@/components/seo/CarListingJsonLd";
 import Image from "next/image";
 import { unstable_noStore } from "next/cache";
 import { isUuid } from "@/lib/utils/slug";
+import { formatMoney } from "@/lib/utils/money";
 
 // Ensure this route is never cached so UUID→slug redirect and fresh data always run
 export const dynamic = "force-dynamic";
@@ -108,7 +109,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
                 {car.title}
               </h1>
               <p className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-                {car.currency} ${parseFloat(car.price).toLocaleString()}
+                {formatMoney(parseFloat(car.price), car.currency || "CAD")}
               </p>
               {car.view_count !== undefined && car.view_count > 0 && (
                 <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">

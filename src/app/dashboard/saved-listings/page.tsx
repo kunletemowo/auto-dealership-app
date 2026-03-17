@@ -69,6 +69,7 @@ export default async function SavedListingsPage() {
                 slug={car.slug}
                 title={car.title}
                 price={parseFloat(car.price)}
+                currency={car.currency}
                 location={`${car.location_city}, ${car.location_region}`}
                 year={car.year}
                 mileage={car.mileage}
