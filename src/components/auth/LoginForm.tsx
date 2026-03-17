@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { Button } from "@/components/forms/Button";
 import { Input } from "@/components/forms/Input";
 import { signIn } from "@/app/actions/auth";
@@ -85,6 +86,14 @@ export function LoginForm({ redirectTo = "/dashboard/my-listings" }: LoginFormPr
         required
         disabled={loading}
       />
+      <div className="flex justify-end">
+        <Link
+          href="/forgot-password"
+          className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Forgot your password?
+        </Link>
+      </div>
       {HCAPTCHA_SITE_KEY && (
         <div className="flex justify-center">
           <HCaptcha

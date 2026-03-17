@@ -198,6 +198,59 @@ export async function signIn(formData: FormData) {
   }
 }
 
+export async function requestPasswordReset(formData: FormData) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+  if (!supabaseUrl || !supabaseKey) {
+    return {
+      error:
+        "Authentication service is not configured. Please contact support.",
+    };
+  }
+
+  try {
+    const supabase = await createClient();
+
+    const email = (formData.get("email") as string | null)?.trim() || "";
+    if (!email) {
+      return { error: "Please enter your email address." };
+    }
+
+    const parsed = loginSchema.pick({ email: true }).safeParse({ email });
+    if (!parsed.success) {
+      return { error: parsed.error.errors[0].message };
+    }
+
+    const redirectUrl =
+      `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/login`;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+
+    if (error) {
+      console.error("Password reset error:", error);
+      return {
+        error:
+          "We couldn't start a password reset right now. Please try again in a moment.",
+      };
+    }
+
+    return {
+      success:
+        "If an account exists for this email, you'll receive a password reset link shortly.",
+    };
+  } catch (err: any) {
+    console.error("Unexpected password reset error:", err);
+    return {
+      error:
+        err?.message ||
+        "Something went wrong while requesting a password reset. Please try again.",
+    };
+  }
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
