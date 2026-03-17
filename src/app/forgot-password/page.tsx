@@ -4,6 +4,11 @@ export const metadata = {
   title: "Forgot Password",
 };
 
+async function resetPasswordAction(formData: FormData) {
+  "use server";
+  await requestPasswordReset(formData);
+}
+
 export default function ForgotPasswordPage() {
   return (
     <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
@@ -14,17 +19,7 @@ export default function ForgotPasswordPage() {
         <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           Enter the email address associated with your account and we'll send you a link to reset your password.
         </p>
-        <form
-          action={async (formData) => {
-            "use server";
-            const result = await requestPasswordReset(formData);
-            if (result?.error) {
-              return { error: result.error };
-            }
-            return { success: result?.success };
-          }}
-          className="space-y-4"
-        >
+        <form action={resetPasswordAction} className="space-y-4">
           <div className="space-y-2">
             <label
               htmlFor="email"
