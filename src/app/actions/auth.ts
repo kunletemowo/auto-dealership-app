@@ -251,6 +251,22 @@ export async function requestPasswordReset(formData: FormData) {
   }
 }
 
+export type ResetPasswordFormState = {
+  success?: string;
+  error?: string;
+};
+
+export async function resetPasswordFormAction(
+  _prevState: ResetPasswordFormState,
+  formData: FormData
+): Promise<ResetPasswordFormState> {
+  const result = await requestPasswordReset(formData);
+  return {
+    success: result.success,
+    error: result.error,
+  };
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
