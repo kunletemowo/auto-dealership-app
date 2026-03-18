@@ -10,7 +10,9 @@ export function SetPasswordForm() {
   return (
     <form
       action={(formData) => {
-        startTransition(() => updatePassword(formData));
+        startTransition(() => {
+          void updatePassword(formData);
+        });
       }}
       className="space-y-4"
     >
