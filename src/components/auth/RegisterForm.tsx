@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/forms/Button";
 import { Input } from "@/components/forms/Input";
@@ -23,6 +23,7 @@ export function RegisterForm() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState<string>("");
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [autoResent, setAutoResent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,10 +50,12 @@ export function RegisterForm() {
         setCaptchaToken(null);
         setLoading(false);
       } else if (result?.success) {
+        // After signup, require a fresh captcha token for any resend attempt (Supabase enforces captcha on /resend).
         setCaptchaToken(null);
         setSuccessEmail((result as any)?.email || (formData.get("email") as string) || "");
         setNeedsEmailConfirmation(Boolean((result as any)?.needsEmailConfirmation));
         setResendMessage("");
+        setAutoResent(false);
         setSuccess(true);
         setLoading(false);
       } else {
@@ -65,6 +68,46 @@ export function RegisterForm() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!success || !needsEmailConfirmation || !successEmail || autoResent) return;
+    // If captcha is enforced, we cannot auto-resend without a user completing the captcha.
+    if (HCAPTCHA_SITE_KEY) return;
+
+    const run = async () => {
+      setResendLoading(true);
+      setResendMessage("");
+      try {
+        const supabase = createClient();
+        const baseUrl =
+          (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SITE_URL?.trim?.()) ||
+          (typeof window !== "undefined" ? window.location.origin : "");
+        const emailRedirectTo = baseUrl
+          ? `${baseUrl.replace(/\/$/, "")}/auth/callback`
+          : `${window.location.origin}/auth/callback`;
+
+        const { error } = await supabase.auth.resend({
+          type: "signup",
+          email: successEmail,
+          options: { emailRedirectTo },
+        });
+
+        if (error) {
+          // This is the most reliable non-hallucinated signal we can show when emails aren't being sent.
+          setError(error.message || "Could not send confirmation email. Please try again.");
+        } else {
+          setResendMessage("Confirmation email sent. Please check your inbox (and spam/junk).");
+        }
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Could not send confirmation email. Please try again.");
+      } finally {
+        setResendLoading(false);
+        setAutoResent(true);
+      }
+    };
+
+    void run();
+  }, [success, needsEmailConfirmation, successEmail, autoResent]);
 
   if (success) {
     return (
@@ -89,19 +132,38 @@ export function RegisterForm() {
 
         {needsEmailConfirmation && (
           <div className="space-y-2">
+            {error && (
+              <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                {error}
+              </div>
+            )}
             {resendMessage && (
               <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
                 {resendMessage}
               </div>
             )}
+            {HCAPTCHA_SITE_KEY && (
+              <div className="flex justify-center">
+                <HCaptcha
+                  sitekey={HCAPTCHA_SITE_KEY}
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                />
+              </div>
+            )}
             <Button
               type="button"
               className="w-full"
-              disabled={resendLoading || !successEmail}
+              disabled={resendLoading || !successEmail || (!!HCAPTCHA_SITE_KEY && !captchaToken)}
               onClick={async () => {
                 if (!successEmail) return;
+                if (HCAPTCHA_SITE_KEY && !captchaToken) {
+                  setError("Please complete the captcha verification.");
+                  return;
+                }
                 setResendLoading(true);
                 setResendMessage("");
+                setError("");
                 try {
                   const supabase = createClient();
                   const baseUrl =
@@ -114,7 +176,8 @@ export function RegisterForm() {
                   const { error } = await supabase.auth.resend({
                     type: "signup",
                     email: successEmail,
-                    options: { emailRedirectTo },
+                    // Supabase Auth captcha enforcement requires passing captchaToken for /resend.
+                    options: { emailRedirectTo, ...(captchaToken ? { captchaToken } : {}) } as any,
                   });
 
                   if (error) {
