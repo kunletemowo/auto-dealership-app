@@ -40,7 +40,10 @@ export function ForgotPasswordForm() {
         setLoading(true);
         try {
           const supabase = createClient();
-          const redirectTo = `${window.location.origin}/auth/recovery`;
+          const baseUrl =
+            (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SITE_URL?.trim?.()) ||
+            (typeof window !== "undefined" ? window.location.origin : "");
+          const redirectTo = baseUrl ? `${baseUrl.replace(/\/$/, "")}/auth/recovery` : `${window.location.origin}/auth/recovery`;
 
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo,

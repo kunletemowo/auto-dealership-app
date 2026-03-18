@@ -9,12 +9,32 @@ export function ResetPasswordGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        setState(data.user ? "ok" : "missing");
-      })
-      .catch(() => setState("missing"));
+    const maxAttempts = 3;
+    const delayMs = 250;
+
+    const check = (attempt: number) => {
+      supabase.auth
+        .getSession()
+        .then(({ data: { session } }) => {
+          if (session) {
+            setState("ok");
+            return;
+          }
+          if (attempt < maxAttempts) {
+            setTimeout(() => check(attempt + 1), delayMs);
+          } else {
+            setState("missing");
+          }
+        })
+        .catch(() => {
+          if (attempt < maxAttempts) {
+            setTimeout(() => check(attempt + 1), delayMs);
+          } else {
+            setState("missing");
+          }
+        });
+    };
+    check(0);
   }, []);
 
   if (state === "checking") {

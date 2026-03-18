@@ -37,9 +37,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     // Use defaults if searchParams unavailable
   }
 
-  // Reset link sometimes lands on /login with code in query — forward to callback to exchange and go to set-password
+  // Reset link sometimes lands on /login with code in query — forward to recovery so client can exchange (PKCE requires same browser)
   if (code) {
-    redirect(`/auth/callback?code=${encodeURIComponent(code)}${type ? `&type=${encodeURIComponent(type)}` : ""}`);
+    redirect(`/auth/recovery?code=${encodeURIComponent(code)}${type ? `&type=${encodeURIComponent(type)}` : ""}`);
   }
 
   const headersList = await headers();

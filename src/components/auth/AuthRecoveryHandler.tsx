@@ -18,13 +18,17 @@ export function AuthRecoveryHandler() {
         .verifyOtp({ type: "recovery", token_hash: tokenHash })
         .then(({ error }) => {
           if (error) {
+            console.error("Recovery verifyOtp error:", error.message);
             setStatus("error");
             return;
           }
           setStatus("done");
           window.location.href = "/reset-password";
         })
-        .catch(() => setStatus("error"));
+        .catch((err) => {
+          console.error("Recovery verifyOtp unexpected error:", err);
+          setStatus("error");
+        });
       return;
     }
 
@@ -35,13 +39,17 @@ export function AuthRecoveryHandler() {
         .exchangeCodeForSession(code)
         .then(({ error }) => {
           if (error) {
+            console.error("Recovery exchangeCodeForSession error:", error.message);
             setStatus("error");
             return;
           }
           setStatus("done");
           window.location.href = "/reset-password";
         })
-        .catch(() => setStatus("error"));
+        .catch((err) => {
+          console.error("Recovery exchangeCodeForSession unexpected error:", err);
+          setStatus("error");
+        });
       return;
     }
 
@@ -64,35 +72,31 @@ export function AuthRecoveryHandler() {
       .setSession({ access_token: accessToken, refresh_token: refreshToken })
       .then(() => {
         setStatus("done");
-        // Full-page navigation so the set-password page gets the session cookie reliably.
         window.location.href = "/reset-password";
       })
-      .catch(() => setStatus("error"));
+      .catch((err) => {
+        console.error("Recovery setSession error:", err);
+        setStatus("error");
+      });
   }, []);
 
   if (status === "error") {
+    const isPkceError = typeof window !== "undefined" && window.location.search.includes("code=");
     return (
       <div className="max-w-md space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
         <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
           This reset link is invalid or has already been used.
         </p>
-        <p className="text-sm text-amber-800 dark:text-amber-300">
-          <strong>Use the same browser</strong> where you requested the reset. If you requested on this site (e.g. localhost), open the link so it comes here; do not request on one site and open the link on another (e.g. production vs localhost), or in a different browser/device—that causes &quot;code challenge does not match&quot;.
-        </p>
-        <p className="text-sm text-amber-800 dark:text-amber-300">
-          Many email providers also &quot;scan&quot; links when you open the email, which can use the link before you click it. To avoid that:
-        </p>
-        <ol className="list-inside list-decimal space-y-1 text-sm text-amber-800 dark:text-amber-300">
-          <li>Request a new reset from the Forgot password page <strong>in this browser</strong>.</li>
-          <li>Copy the reset link from the email (right‑click → Copy link). Do not click it.</li>
-          <li>Paste the link into this browser&apos;s address bar (or a new tab), or use an incognito window opened from this same browser.</li>
-          <li>Use the link within a few minutes.</li>
-        </ol>
+        {isPkceError && (
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            Open this link in the <strong>same browser and same site</strong> where you requested the reset (e.g. do not request on localhost and open on production, or the other way around).
+          </p>
+        )}
         <a
           href="/forgot-password"
-          className="inline-block text-sm font-medium text-amber-900 underline hover:no-underline dark:text-amber-200"
+          className="inline-block rounded-md bg-amber-200 px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700"
         >
-          Go to Forgot password
+          Request a new link
         </a>
       </div>
     );
