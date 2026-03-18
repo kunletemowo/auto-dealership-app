@@ -66,20 +66,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </p>
         </div>
         <div className="rounded-lg bg-white p-8 shadow-sm dark:bg-zinc-900">
-          {redirectParam?.startsWith("/dashboard") && (
-            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-              <strong>Clicked a password reset link?</strong> You were sent to sign-in instead of &quot;Set new password&quot;.{" "}
-              {isLocalhost ? (
-                <>
-                  You&apos;re on <strong>localhost</strong>. For the reset link to work here, set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/60">NEXT_PUBLIC_SITE_URL=http://localhost:3000</code> in <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/60">.env.local</code> (no trailing slash). Ensure <code className="break-all rounded bg-amber-100 px-1 dark:bg-amber-900/60">{callbackUrl}</code> is in Supabase <strong>Redirect URLs</strong>. Restart the dev server, then request a new reset from the Forgot password page.
-                </>
-              ) : (
-                <>
-                  In Supabase go to <strong>Authentication → URL Configuration → Redirect URLs</strong> and add <code className="break-all rounded bg-amber-100 px-1 dark:bg-amber-900/60">{callbackUrl}</code> if missing. Set <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/60">NEXT_PUBLIC_SITE_URL</code> to this site&apos;s URL with no trailing slash. Then request a new reset email.
-                </>
-              )}
-            </div>
-          )}
           {message && (
             <div className="mb-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
               {message}
