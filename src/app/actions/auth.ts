@@ -55,7 +55,7 @@ export async function signUp(formData: FormData) {
       data?: { first_name: string; last_name: string; display_name: string };
       captchaToken?: string;
     } = {
-      emailRedirectTo: `${(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/auth/callback`,
+      emailRedirectTo: `${(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/auth/confirm`,
       data: {
         first_name: firstName.trim(),
         last_name: lastName.trim(),

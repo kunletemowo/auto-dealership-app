@@ -83,8 +83,8 @@ export function RegisterForm() {
           (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SITE_URL?.trim?.()) ||
           (typeof window !== "undefined" ? window.location.origin : "");
         const emailRedirectTo = baseUrl
-          ? `${baseUrl.replace(/\/$/, "")}/auth/callback`
-          : `${window.location.origin}/auth/callback`;
+          ? `${baseUrl.replace(/\/$/, "")}/auth/confirm`
+          : `${window.location.origin}/auth/confirm`;
 
         const { error } = await supabase.auth.resend({
           type: "signup",
@@ -170,8 +170,8 @@ export function RegisterForm() {
                     (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SITE_URL?.trim?.()) ||
                     (typeof window !== "undefined" ? window.location.origin : "");
                   const emailRedirectTo = baseUrl
-                    ? `${baseUrl.replace(/\/$/, "")}/auth/callback`
-                    : `${window.location.origin}/auth/callback`;
+                    ? `${baseUrl.replace(/\/$/, "")}/auth/confirm`
+                    : `${window.location.origin}/auth/confirm`;
 
                   const { error } = await supabase.auth.resend({
                     type: "signup",
