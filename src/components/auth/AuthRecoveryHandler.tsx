@@ -10,74 +10,74 @@ export function AuthRecoveryHandler() {
     const search = new URLSearchParams(window.location.search);
     const supabase = createClient();
 
-    // Some Supabase flows redirect back with token_hash in the querystring
-    // (server never sees it if it lands in the hash).
-    const tokenHash = search.get("token_hash") ?? search.get("token");
-    if (tokenHash) {
-      supabase.auth
-        .verifyOtp({ type: "recovery", token_hash: tokenHash })
-        .then(({ error }) => {
-          if (error) {
-            console.error("Recovery verifyOtp error:", error.message);
-            setStatus("error");
-            return;
-          }
-          setStatus("done");
-          window.location.href = "/reset-password";
-        })
-        .catch((err) => {
-          console.error("Recovery verifyOtp unexpected error:", err);
+    const redirectToReset = () => {
+      setStatus("done");
+      window.location.href = "/reset-password";
+    };
+
+    const run = async () => {
+      // If user already has a session (e.g. already logged in, or session set by another tab/component),
+      // send them straight to set-password so they can change it. Avoids "invalid link" while header shows signed in.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        redirectToReset();
+        return;
+      }
+
+      // Some Supabase flows redirect back with token_hash in the querystring
+      const tokenHash = search.get("token_hash") ?? search.get("token");
+      if (tokenHash) {
+        const { error } = await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+        if (error) {
+          console.error("Recovery verifyOtp error:", error.message);
           setStatus("error");
-        });
-      return;
-    }
+          return;
+        }
+        redirectToReset();
+        return;
+      }
 
-    // PKCE flow: Supabase redirects back with ?code=...
-    const code = search.get("code");
-    if (code) {
-      supabase.auth
-        .exchangeCodeForSession(code)
-        .then(({ error }) => {
-          if (error) {
-            console.error("Recovery exchangeCodeForSession error:", error.message);
-            setStatus("error");
-            return;
-          }
-          setStatus("done");
-          window.location.href = "/reset-password";
-        })
-        .catch((err) => {
-          console.error("Recovery exchangeCodeForSession unexpected error:", err);
+      // PKCE flow: Supabase redirects back with ?code=...
+      const code = search.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error("Recovery exchangeCodeForSession error:", error.message);
           setStatus("error");
-        });
-      return;
-    }
+          return;
+        }
+        redirectToReset();
+        return;
+      }
 
-    const hash = window.location.hash.slice(1);
-    if (!hash) {
-      setStatus("error");
-      return;
-    }
-
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-
-    if (!accessToken || !refreshToken) {
-      setStatus("error");
-      return;
-    }
-
-    supabase.auth
-      .setSession({ access_token: accessToken, refresh_token: refreshToken })
-      .then(() => {
-        setStatus("done");
-        window.location.href = "/reset-password";
-      })
-      .catch((err) => {
-        console.error("Recovery setSession error:", err);
+      const hash = window.location.hash.slice(1);
+      if (!hash) {
         setStatus("error");
-      });
+        return;
+      }
+
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+
+      if (!accessToken || !refreshToken) {
+        setStatus("error");
+        return;
+      }
+
+      const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      if (error) {
+        console.error("Recovery setSession error:", error);
+        setStatus("error");
+        return;
+      }
+      redirectToReset();
+    };
+
+    run().catch((err) => {
+      console.error("Recovery unexpected error:", err);
+      setStatus("error");
+    });
   }, []);
 
   if (status === "error") {
