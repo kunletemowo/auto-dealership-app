@@ -14,9 +14,6 @@ export default function ForgotPasswordPage() {
         <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
           Enter the email address associated with your account and we'll send you a link to reset your password.
         </p>
-        <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-          <strong>Important:</strong> Open the reset link in the <strong>same browser</strong> (and same site) where you request it. If you're on localhost, the link will point here; open it here. Requesting on one URL and opening the link on another causes the link to fail.
-        </p>
         <ForgotPasswordForm />
       </div>
     </div>

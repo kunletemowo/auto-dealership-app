@@ -108,7 +108,13 @@ export async function signUp(formData: FormData) {
     // and can create their profile later when needed
 
     revalidatePath("/", "layout");
-    return { success: true, user: data.user };
+    const needsEmailConfirmation = !data.session;
+    return {
+      success: true,
+      user: data.user,
+      needsEmailConfirmation,
+      email: data.user?.email ?? email,
+    };
   } catch (err: any) {
     // Catch any unexpected errors
     console.error("Sign up error:", err);

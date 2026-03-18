@@ -8,6 +8,17 @@ function isUuid(param: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
+  const host = request.headers.get("host") || "";
+
+  // Canonicalize production domain to avoid split cookies / auth issues.
+  // If the apex domain is accessed, redirect to www (preserve path + query).
+  if (host === "kuldae.com") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.host = "www.kuldae.com";
+    redirectUrl.protocol = "https:";
+    return NextResponse.redirect(redirectUrl, 308);
+  }
+
   // Redirect GET /cars/[uuid] to /cars/[slug] when listing has a slug (before session refresh)
   const { pathname } = request.nextUrl;
   const carsMatch = pathname.match(/^\/cars\/([^/]+)\/?$/);

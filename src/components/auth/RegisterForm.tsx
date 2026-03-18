@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/forms/Button";
 import { Input } from "@/components/forms/Input";
 import { signUp } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
 const HCaptcha = dynamic(
   () => import("@hcaptcha/react-hcaptcha").then((mod) => mod.default),
@@ -17,6 +18,10 @@ export function RegisterForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [successEmail, setSuccessEmail] = useState<string>("");
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState<boolean>(true);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string>("");
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,6 +50,9 @@ export function RegisterForm() {
         setLoading(false);
       } else if (result?.success) {
         setCaptchaToken(null);
+        setSuccessEmail((result as any)?.email || (formData.get("email") as string) || "");
+        setNeedsEmailConfirmation(Boolean((result as any)?.needsEmailConfirmation));
+        setResendMessage("");
         setSuccess(true);
         setLoading(false);
       } else {
@@ -63,10 +71,68 @@ export function RegisterForm() {
       <div className="space-y-4">
         <div className="rounded-md bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
           <p className="font-semibold">Account created successfully!</p>
-          <p className="mt-1">
-            You are now signed up as a user of Kuldae Autos.
-          </p>
+          {needsEmailConfirmation ? (
+            <>
+              <p className="mt-1">
+                We sent a confirmation email{successEmail ? <> to <strong>{successEmail}</strong></> : null}. Please open it and click the confirmation link to activate your account.
+              </p>
+              <p className="mt-2 text-xs opacity-90">
+                If you don’t see it, check your spam/junk folder. Some email providers delay delivery by a few minutes.
+              </p>
+            </>
+          ) : (
+            <p className="mt-1">
+              Your account is active. You can sign in now.
+            </p>
+          )}
         </div>
+
+        {needsEmailConfirmation && (
+          <div className="space-y-2">
+            {resendMessage && (
+              <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
+                {resendMessage}
+              </div>
+            )}
+            <Button
+              type="button"
+              className="w-full"
+              disabled={resendLoading || !successEmail}
+              onClick={async () => {
+                if (!successEmail) return;
+                setResendLoading(true);
+                setResendMessage("");
+                try {
+                  const supabase = createClient();
+                  const baseUrl =
+                    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SITE_URL?.trim?.()) ||
+                    (typeof window !== "undefined" ? window.location.origin : "");
+                  const emailRedirectTo = baseUrl
+                    ? `${baseUrl.replace(/\/$/, "")}/auth/callback`
+                    : `${window.location.origin}/auth/callback`;
+
+                  const { error } = await supabase.auth.resend({
+                    type: "signup",
+                    email: successEmail,
+                    options: { emailRedirectTo },
+                  });
+
+                  if (error) {
+                    setError(error.message || "Could not resend confirmation email. Please try again.");
+                  } else {
+                    setResendMessage("Confirmation email resent. Please check your inbox (and spam/junk).");
+                  }
+                } catch (err: unknown) {
+                  setError(err instanceof Error ? err.message : "Could not resend confirmation email. Please try again.");
+                } finally {
+                  setResendLoading(false);
+                }
+              }}
+            >
+              {resendLoading ? "Resending..." : "Resend confirmation email"}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { updatePassword } from "@/app/actions/auth";
+import { Input } from "@/components/forms/Input";
 
 export function SetPasswordForm() {
   const [isPending, startTransition] = useTransition();
@@ -16,42 +17,28 @@ export function SetPasswordForm() {
       }}
       className="space-y-4"
     >
-      <div className="space-y-2">
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          New password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={6}
-          autoComplete="new-password"
-          className="block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-          placeholder="At least 6 characters"
-        />
-      </div>
-      <div className="space-y-2">
-        <label
-          htmlFor="confirmPassword"
-          className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          Confirm new password
-        </label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          required
-          minLength={6}
-          autoComplete="new-password"
-          className="block w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
-          placeholder="Repeat password"
-        />
-      </div>
+      <Input
+        id="password"
+        name="password"
+        type="password"
+        label="New password"
+        required
+        minLength={6}
+        autoComplete="new-password"
+        placeholder="At least 6 characters"
+        disabled={isPending}
+      />
+      <Input
+        id="confirmPassword"
+        name="confirmPassword"
+        type="password"
+        label="Confirm new password"
+        required
+        minLength={6}
+        autoComplete="new-password"
+        placeholder="Repeat password"
+        disabled={isPending}
+      />
       <button
         type="submit"
         disabled={isPending}
