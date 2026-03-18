@@ -191,6 +191,61 @@ After configuring email settings:
 4. Check browser console for detailed error logs
 5. Check Supabase Dashboard → Logs → Auth Logs
 
+## Password reset: "Success" shown but no email received
+
+If the forgot-password form shows a success message but the user never receives the reset email:
+
+### 1. Allowlist the auth callback URL (most common)
+
+The app sends the reset link to **your auth callback URL**. Supabase will not send the email (or may use the wrong link) if that URL is not allowlisted.
+
+**Fix:**
+1. Go to **Supabase Dashboard → Authentication → URL Configuration**.
+2. Under **Redirect URLs**, add **exactly** (so the link in the email goes here and you get the set-password page):
+   - For local: `http://localhost:3000/auth/callback`
+   - For production: `https://kuldae.com/auth/callback` (or your production domain)
+   - Or use a wildcard: `http://localhost:3000/**` and `https://yourdomain.com/**`
+3. Ensure **Site URL** matches your app (e.g. `http://localhost:3000` for dev, `https://yourdomain.com` for prod).
+
+**If you still land on the sign-in page:** The reset link may be pointing at a different path (e.g. `/dashboard` or `/login`). Where the link goes is decided by the allowlisted URL Supabase uses. Add `https://yourdomain.com/auth/callback` to Redirect URLs and ensure the **Reset password** email template uses `{{ .ConfirmationURL }}` so the link uses that path. You can check the real link by right‑clicking “Reset Password” in the email → Copy link and inspecting the URL.
+
+### 2. Use the redirect in the reset email template
+
+If the link in the email ignores your `redirectTo` and uses the default Site URL, the link may point to the wrong path.
+
+**Fix:**
+1. Go to **Supabase Dashboard → Authentication → Email Templates**.
+2. Open the **Reset password** template.
+3. Ensure the confirmation link uses `{{ .ConfirmationURL }}` (it includes the redirect). If the template uses a custom link with only `{{ .SiteURL }}`, change it so the button/link uses `{{ .ConfirmationURL }}`.
+
+### 3. Other checks
+
+- **SMTP / rate limits:** Same as signup (see sections above). Use a transactional provider in production.
+- **Spam folder:** Ask the user to check spam/junk.
+- **Correct email:** The message says "if an account exists" — confirm the email has an account in Supabase Dashboard → Authentication → Users.
+
+## Supabase log: "One-time token not found" / "403: Email link is invalid or has expired"
+
+If Supabase Auth logs show this when the user clicks the password reset link:
+
+- **Cause:** The one-time token in the link was already used or has expired. Common causes:
+  1. **Email link scanning** – Gmail, Outlook, and other clients often prefetch or “scan” links when you open the email. That first request uses the token, so when the user clicks the link, Supabase no longer has it.
+  2. **Link used twice** – Opening the same reset link in two tabs or clicking it again after a refresh.
+  3. **Expiry** – Recovery tokens expire (often within an hour); old links will fail.
+
+**What to do:**
+
+1. **Request a new reset** from the Forgot password page (so a new token is created).
+2. **Do not click the link in the email.** Right‑click the “Reset password” link → **Copy link**.
+3. **Open a new incognito or private browser window** and **paste the link** into the address bar, then press Enter.
+4. Use the link **within a few minutes** of requesting the reset.
+
+The app’s recovery page also shows these steps when a link is invalid. Ensure users always request the reset from the app’s Forgot password page (so the reset is triggered from the browser and PKCE works correctly).
+
+### "400: code challenge does not match previously saved code verifier" (path `/token`)
+
+The reset was **requested** in one place (e.g. production) but the **link was opened** in another (e.g. localhost or a different browser). PKCE requires the **same browser and same site** for both steps. Request the reset and open the link on the same origin (e.g. both on localhost, or both on production). Do not mix.
+
 ## Need More Help?
 
 - Check Supabase Documentation: https://supabase.com/docs/guides/auth/auth-email

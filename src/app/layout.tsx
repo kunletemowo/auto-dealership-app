@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ToastProvider } from "@/components/ui/Toast";
 import { OrganizationJsonLd } from "@/components/seo/OrganizationJsonLd";
+import { AuthHashHandler } from "@/components/auth/AuthHashHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,6 +68,7 @@ export default function RootLayout({
       >
         <OrganizationJsonLd />
         <ToastProvider>
+          <AuthHashHandler />
           <Header />
           <main className="min-h-screen">
             <Suspense fallback={null}>{children}</Suspense>

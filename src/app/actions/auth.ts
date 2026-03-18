@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { loginSchema, registerSchema } from "@/lib/validators/auth";
+import { loginSchema, registerSchema, setPasswordSchema } from "@/lib/validators/auth";
 
 export async function signUp(formData: FormData) {
   // Check for environment variables early
@@ -55,7 +55,7 @@ export async function signUp(formData: FormData) {
       data?: { first_name: string; last_name: string; display_name: string };
       captchaToken?: string;
     } = {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
+      emailRedirectTo: `${(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")}/auth/callback`,
       data: {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
@@ -222,18 +222,26 @@ export async function requestPasswordReset(formData: FormData) {
       return { error: parsed.error.errors[0].message };
     }
 
-    const redirectUrl =
-      `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/login`;
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+    // Use a dedicated recovery endpoint with NO querystring.
+    // Supabase redirect allowlists can be strict; querystrings may cause fallback to Site URL.
+    const redirectUrl = `${siteUrl}/auth/recovery`;
+    const captchaToken = (formData.get("captchaToken") as string | null)?.trim() || null;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
+      ...(captchaToken && { captchaToken }),
     });
 
     if (error) {
       console.error("Password reset error:", error);
+      const message = error.message || "We couldn't start a password reset right now.";
+      const isRedirectError = message.toLowerCase().includes("redirect") || message.toLowerCase().includes("url");
+      const hint = isRedirectError
+        ? ` Add this URL in Supabase Dashboard → Authentication → URL Configuration → Redirect URLs: ${redirectUrl}`
+        : "";
       return {
-        error:
-          "We couldn't start a password reset right now. Please try again in a moment.",
+        error: message + hint,
       };
     }
 
@@ -265,6 +273,34 @@ export async function resetPasswordFormAction(
     success: result.success,
     error: result.error,
   };
+}
+
+export async function updatePassword(formData: FormData) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your session has expired. Please request a new password reset link." };
+  }
+
+  const raw = {
+    password: formData.get("password") as string,
+    confirmPassword: formData.get("confirmPassword") as string,
+  };
+  const parsed = setPasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0].message };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    console.error("Update password error:", error);
+    return { error: error.message || "Failed to update password. Please try again." };
+  }
+
+  await supabase.auth.signOut();
+  revalidatePath("/", "layout");
+  redirect("/login?message=Password updated. Sign in with your new password.");
 }
 
 export async function signOut() {
